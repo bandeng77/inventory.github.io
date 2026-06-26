@@ -11,7 +11,6 @@
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
@@ -37,7 +36,7 @@
             -webkit-backdrop-filter: blur(16px);
             border-radius: 40px;
             padding: 3rem 2.5rem;
-            max-width: 440px;
+            max-width: 420px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.7);
@@ -174,36 +173,6 @@
             background: #e2e8f0;
         }
 
-        .btn-google {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 30px;
-            background: white;
-            color: #1e293b;
-            font-weight: 500;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            height: 52px;
-        }
-
-        .btn-google:hover {
-            border-color: #1a2639;
-            background: #f8fafc;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-        }
-
-        .btn-google img {
-            width: 20px;
-            height: 20px;
-        }
-
         .error-message {
             background: #fee2e2;
             color: #991b1b;
@@ -217,6 +186,22 @@
         }
 
         .error-message.show {
+            display: flex;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .success-message.show {
             display: flex;
         }
 
@@ -279,6 +264,41 @@
             }
         }
 
+        .mode-toggle {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 30px;
+            padding: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        .mode-toggle button {
+            flex: 1;
+            padding: 0.6rem;
+            border: none;
+            border-radius: 26px;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-toggle button.active {
+            background: white;
+            color: #0f172a;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .mode-toggle button:hover:not(.active) {
+            color: #1a2639;
+        }
+
+        .form-group.hidden {
+            display: none;
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 padding: 2rem 1.5rem;
@@ -293,7 +313,7 @@
                 <i class="fas fa-server"></i>
             </div>
             <h1>IT Inventory Manager</h1>
-            <p>Login untuk mengelola inventaris</p>
+            <p id="modeDescription">Login untuk mengelola inventaris</p>
         </div>
 
         <div class="error-message" id="errorMessage">
@@ -301,8 +321,23 @@
             <span id="errorText">Error message</span>
         </div>
 
-        <!-- Login Form -->
-        <form id="loginForm">
+        <div class="success-message" id="successMessage">
+            <i class="fas fa-check-circle"></i>
+            <span id="successText">Success message</span>
+        </div>
+
+        <!-- Mode Toggle: Login / Register -->
+        <div class="mode-toggle" id="modeToggle">
+            <button class="active" data-mode="login">Login</button>
+            <button data-mode="register">Daftar</button>
+        </div>
+
+        <!-- Login/Register Form -->
+        <form id="authForm">
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="usernameInput" placeholder="Masukkan username" required autocomplete="username" />
+            </div>
             <div class="form-group">
                 <label><i class="fas fa-envelope"></i> Email</label>
                 <input type="email" id="emailInput" placeholder="email@domain.com" required autocomplete="email" />
@@ -316,26 +351,23 @@
                     </button>
                 </div>
             </div>
-            <button type="submit" class="btn-login" id="loginBtn">
+            <div class="form-group hidden" id="confirmPasswordGroup">
+                <label><i class="fas fa-check-circle"></i> Konfirmasi Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="confirmPasswordInput" placeholder="Ulangi password" />
+                    <button type="button" class="toggle-btn" id="toggleConfirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-login" id="authBtn">
                 <i class="fas fa-sign-in-alt"></i>
-                <span id="loginBtnText">Login</span>
+                <span id="authBtnText">Login</span>
             </button>
         </form>
 
-        <div class="divider">atau</div>
-
-        <button class="btn-google" id="googleBtn">
-            <svg width="20" height="20" viewBox="0 0 48 48">
-                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
-                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
-                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
-                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
-            </svg>
-            Login dengan Google
-        </button>
-
-        <div class="register-link">
-            Belum punya akun? <a id="registerLink">Daftar di sini</a>
+        <div class="register-link" id="switchModeLink">
+            Belum punya akun? <a id="switchLink">Daftar di sini</a>
         </div>
     </div>
 
@@ -352,68 +384,89 @@
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
 
         // ==================== DOM ELEMENTS ====================
-        const loginForm = document.getElementById('loginForm');
+        const authForm = document.getElementById('authForm');
+        const usernameInput = document.getElementById('usernameInput');
         const emailInput = document.getElementById('emailInput');
         const passwordInput = document.getElementById('passwordInput');
-        const loginBtn = document.getElementById('loginBtn');
-        const loginBtnText = document.getElementById('loginBtnText');
+        const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+        const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+        const authBtn = document.getElementById('authBtn');
+        const authBtnText = document.getElementById('authBtnText');
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
-        const googleBtn = document.getElementById('googleBtn');
-        const registerLink = document.getElementById('registerLink');
+        const successMessage = document.getElementById('successMessage');
+        const successText = document.getElementById('successText');
         const togglePassword = document.getElementById('togglePassword');
+        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+        const modeToggle = document.getElementById('modeToggle');
+        const switchLink = document.getElementById('switchLink');
+        const modeDescription = document.getElementById('modeDescription');
+
+        let currentMode = 'login'; // 'login' or 'register'
 
         // ==================== HELPER FUNCTIONS ====================
         function showError(message) {
             errorText.textContent = message;
             errorMessage.classList.add('show');
+            successMessage.classList.remove('show');
             setTimeout(() => {
                 errorMessage.classList.remove('show');
             }, 5000);
         }
 
+        function showSuccess(message) {
+            successText.textContent = message;
+            successMessage.classList.add('show');
+            errorMessage.classList.remove('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 5000);
+        }
+
         function setLoading(loading) {
             if (loading) {
-                loginBtn.disabled = true;
-                loginBtnText.innerHTML = '<span class="loading-spinner"></span> Loading...';
+                authBtn.disabled = true;
+                authBtnText.innerHTML = '<span class="loading-spinner"></span> Loading...';
             } else {
-                loginBtn.disabled = false;
-                loginBtnText.textContent = 'Login';
+                authBtn.disabled = false;
+                authBtnText.textContent = currentMode === 'login' ? 'Login' : 'Daftar';
             }
         }
 
-        function handleAuthError(error) {
-            let message = 'Terjadi kesalahan. Silakan coba lagi.';
-            switch (error.code) {
-                case 'auth/user-not-found':
-                    message = 'Email tidak terdaftar. Silakan daftar terlebih dahulu.';
-                    break;
-                case 'auth/wrong-password':
-                    message = 'Password salah. Silakan coba lagi.';
-                    break;
-                case 'auth/invalid-email':
-                    message = 'Format email tidak valid.';
-                    break;
-                case 'auth/too-many-requests':
-                    message = 'Terlalu banyak percobaan. Coba lagi nanti.';
-                    break;
-                case 'auth/network-request-failed':
-                    message = 'Koneksi internet bermasalah. Periksa koneksi Anda.';
-                    break;
-                case 'auth/email-already-in-use':
-                    message = 'Email sudah terdaftar. Silakan login.';
-                    break;
-                case 'auth/weak-password':
-                    message = 'Password terlalu lemah. Minimal 6 karakter.';
-                    break;
-                default:
-                    message = error.message;
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update toggle buttons
+            document.querySelectorAll('.mode-toggle button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            
+            // Update form
+            if (mode === 'login') {
+                confirmPasswordGroup.classList.add('hidden');
+                authBtnText.textContent = 'Login';
+                authBtn.querySelector('i').className = 'fas fa-sign-in-alt';
+                modeDescription.textContent = 'Login untuk mengelola inventaris';
+                switchLink.innerHTML = 'Belum punya akun? <a id="switchLink">Daftar di sini</a>';
+                document.getElementById('switchLink').addEventListener('click', () => switchMode('register'));
+                // Reset form
+                authForm.reset();
+                errorMessage.classList.remove('show');
+                successMessage.classList.remove('show');
+            } else {
+                confirmPasswordGroup.classList.remove('hidden');
+                authBtnText.textContent = 'Daftar';
+                authBtn.querySelector('i').className = 'fas fa-user-plus';
+                modeDescription.textContent = 'Daftar akun baru untuk mulai menggunakan';
+                switchLink.innerHTML = 'Sudah punya akun? <a id="switchLink">Login di sini</a>';
+                document.getElementById('switchLink').addEventListener('click', () => switchMode('login'));
+                authForm.reset();
+                errorMessage.classList.remove('show');
+                successMessage.classList.remove('show');
             }
-            showError(message);
         }
 
         // ==================== TOGGLE PASSWORD ====================
@@ -424,50 +477,147 @@
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
 
-        // ==================== LOGIN WITH EMAIL ====================
-        loginForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-
-            if (!email || !password) {
-                showError('Silakan isi email dan password.');
-                return;
-            }
-
-            setLoading(true);
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // Redirect ke halaman utama
-                window.location.href = 'IT-Inventory.html';
-            } catch (error) {
-                handleAuthError(error);
-                setLoading(false);
-            }
+        toggleConfirmPassword.addEventListener('click', function() {
+            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
         });
 
-        // ==================== LOGIN WITH GOOGLE ====================
-        googleBtn.addEventListener('click', async function() {
-            setLoading(true);
+        // ==================== MODE TOGGLE ====================
+        document.querySelectorAll('.mode-toggle button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                switchMode(this.dataset.mode);
+            });
+        });
+
+        // ==================== AUTH FUNCTIONS ====================
+        async function loginUser(email, password) {
             try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                await auth.signInWithPopup(provider);
-                window.location.href = 'IT-Inventory.html';
-            } catch (error) {
-                if (error.code !== 'auth/popup-closed-by-user') {
-                    handleAuthError(error);
+                // Cari user di Firestore berdasarkan email
+                const usersRef = db.collection('users');
+                const snapshot = await usersRef.where('email', '==', email).get();
+                
+                if (snapshot.empty) {
+                    showError('Email tidak terdaftar. Silakan daftar terlebih dahulu.');
+                    return false;
                 }
-                setLoading(false);
-            }
-        });
 
-        // ==================== REGISTER ====================
-        registerLink.addEventListener('click', async function() {
+                let userData = null;
+                let userId = null;
+                snapshot.forEach(doc => {
+                    userData = doc.data();
+                    userId = doc.id;
+                });
+
+                // Verifikasi password (simple hash comparison)
+                // Note: Dalam produksi, gunakan bcrypt atau hash yang lebih aman
+                const hashedPassword = await hashPassword(password);
+                if (userData.password !== hashedPassword) {
+                    showError('Password salah. Silakan coba lagi.');
+                    return false;
+                }
+
+                // Login sukses
+                const user = {
+                    id: userId,
+                    username: userData.username,
+                    email: userData.email,
+                    displayName: userData.username,
+                    createdAt: userData.createdAt
+                };
+                
+                // Simpan session di localStorage
+                localStorage.setItem('itUser', JSON.stringify(user));
+                showSuccess('Login berhasil! Mengalihkan...');
+                
+                setTimeout(() => {
+                    window.location.href = 'IT-Inventory.html';
+                }, 1000);
+                
+                return true;
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Terjadi kesalahan: ' + error.message);
+                return false;
+            }
+        }
+
+        async function registerUser(username, email, password) {
+            try {
+                // Cek apakah username sudah digunakan
+                const usernameCheck = await db.collection('users')
+                    .where('username', '==', username)
+                    .get();
+                
+                if (!usernameCheck.empty) {
+                    showError('Username sudah digunakan. Silakan pilih username lain.');
+                    return false;
+                }
+
+                // Cek apakah email sudah digunakan
+                const emailCheck = await db.collection('users')
+                    .where('email', '==', email)
+                    .get();
+                
+                if (!emailCheck.empty) {
+                    showError('Email sudah terdaftar. Silakan login.');
+                    return false;
+                }
+
+                // Hash password
+                const hashedPassword = await hashPassword(password);
+
+                // Simpan user ke Firestore
+                await db.collection('users').add({
+                    username: username,
+                    email: email,
+                    password: hashedPassword,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    role: 'user'
+                });
+
+                showSuccess('Pendaftaran berhasil! Silakan login.');
+                
+                // Switch ke mode login setelah 2 detik
+                setTimeout(() => {
+                    switchMode('login');
+                    authForm.reset();
+                    showSuccess('Silakan login dengan akun baru Anda.');
+                }, 2000);
+                
+                return true;
+            } catch (error) {
+                console.error('Register error:', error);
+                showError('Terjadi kesalahan: ' + error.message);
+                return false;
+            }
+        }
+
+        // Simple hash function (untuk demo)
+        // Dalam produksi, gunakan library hashing yang lebih aman
+        async function hashPassword(password) {
+            // Simple hash menggunakan btoa (Base64) - hanya untuk demo
+            // Untuk produksi, gunakan bcrypt atau CryptoJS
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password + 'it-inventory-salt');
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        // ==================== FORM SUBMIT ====================
+        authForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = usernameInput.value.trim();
             const email = emailInput.value.trim();
             const password = passwordInput.value;
 
-            if (!email || !password) {
-                showError('Silakan isi email dan password untuk mendaftar.');
+            // Validasi
+            if (!username || !email || !password) {
+                showError('Semua field wajib diisi.');
                 return;
             }
 
@@ -476,43 +626,55 @@
                 return;
             }
 
-            setLoading(true);
-            try {
-                await auth.createUserWithEmailAndPassword(email, password);
-                // Set default display name
-                const user = auth.currentUser;
-                if (user) {
-                    await user.updateProfile({
-                        displayName: email.split('@')[0]
-                    });
+            if (currentMode === 'login') {
+                setLoading(true);
+                await loginUser(email, password);
+                setLoading(false);
+            } else {
+                // Register mode
+                const confirmPassword = confirmPasswordInput.value;
+                if (password !== confirmPassword) {
+                    showError('Password dan konfirmasi password tidak sama.');
+                    return;
                 }
-                window.location.href = 'IT-Inventory.html';
-            } catch (error) {
-                handleAuthError(error);
+                setLoading(true);
+                await registerUser(username, email, password);
                 setLoading(false);
             }
         });
 
-        // ==================== AUTO REDIRECT IF ALREADY LOGGED IN ====================
-        auth.onAuthStateChanged(function(user) {
-            if (user) {
-                // Already logged in, redirect to main page
-                window.location.href = 'IT-Inventory.html';
+        // ==================== SWITCH MODE VIA LINK ====================
+        switchLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentMode === 'login') {
+                switchMode('register');
+            } else {
+                switchMode('login');
             }
         });
 
-        // ==================== KEYBOARD SHORTCUT: Enter to submit ====================
+        // ==================== KEYBOARD SHORTCUT ====================
         passwordInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
-                loginForm.dispatchEvent(new Event('submit'));
+                authForm.dispatchEvent(new Event('submit'));
             }
         });
 
-        emailInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                passwordInput.focus();
+        // ==================== AUTO REDIRECT IF ALREADY LOGGED IN ====================
+        const savedUser = localStorage.getItem('itUser');
+        if (savedUser) {
+            try {
+                const user = JSON.parse(savedUser);
+                if (user && user.id) {
+                    window.location.href = 'IT-Inventory.html';
+                }
+            } catch (e) {
+                localStorage.removeItem('itUser');
             }
-        });
+        }
+
+        // ==================== INIT ====================
+        switchMode('login');
     </script>
 </body>
 </html>
