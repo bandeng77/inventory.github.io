@@ -544,7 +544,7 @@
                 localStorage.setItem('itUser', JSON.stringify(sessionUser));
                 
                 // Redirect ke halaman utama
-                window.location.href = 'IT-Inventory.html';
+                window.location.href = 'index.html';
                 
             } catch (error) {
                 console.error('Login error:', error);
@@ -634,7 +634,7 @@ registerUser('budi@domain.com', 'budi123', 'budi');
         auth.onAuthStateChanged(function(user) {
             if (user) {
                 // Already logged in, redirect to main page
-                window.location.href = 'IT-Inventory.html';
+                window.location.href = 'index.html';
             }
         });
 
