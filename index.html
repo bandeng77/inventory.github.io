@@ -18,6 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
+        /* ===== ALL STYLES SAMA SEPERTI SEBELUMNYA ===== */
         * {
             margin: 0;
             padding: 0;
@@ -1318,7 +1319,6 @@
             }
         }
 
-        // ----- ITEMS -----
         async function loadItemsFromFirestore() {
             try {
                 const snapshot = await db.collection(COLLECTION_ITEMS)
@@ -1368,7 +1368,6 @@
             }
         }
 
-        // ----- LOGS -----
         async function loadLogsFromFirestore() {
             try {
                 const snapshot = await db.collection(COLLECTION_LOGS)
@@ -1728,6 +1727,121 @@
         }
 
         // ============================================================
+        //  IMPORT EXCEL FUNCTIONS (DIPERBAIKI)
+        // ============================================================
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    console.log('Data dari Excel:', jsonData); // Debug
+
+                    if (!jsonData || jsonData.length === 0) {
+                        alert('File Excel kosong atau tidak memiliki data.');
+                        return;
+                    }
+
+                    // Mapping header otomatis
+                    const columns = Object.keys(jsonData[0]);
+                    console.log('Kolom yang ditemukan:', columns);
+
+                    const headerMap = {};
+                    columns.forEach(col => {
+                        const lower = col.toLowerCase().trim();
+                        if (lower.includes('nama') || lower.includes('barang')) {
+                            headerMap['name'] = col;
+                        } else if (lower.includes('serial')) {
+                            headerMap['serial'] = col;
+                        } else if (lower.includes('jenis')) {
+                            headerMap['type'] = col;
+                        } else if (lower === 'user' || lower.includes('pengguna')) {
+                            headerMap['user'] = col;
+                        } else if (lower.includes('pic') || lower.includes('penanggung')) {
+                            headerMap['pic'] = col;
+                        } else if (lower.includes('lend') || lower.includes('pinjam')) {
+                            headerMap['lendDate'] = col;
+                        } else if (lower.includes('return') || lower.includes('kembali')) {
+                            headerMap['returnDate'] = col;
+                        } else if (lower.includes('deskripsi') || lower.includes('description')) {
+                            headerMap['description'] = col;
+                        }
+                    });
+
+                    console.log('Header mapping:', headerMap);
+
+                    importedData = jsonData.map((row, index) => {
+                        const item = {
+                            name: row[headerMap['name']] || row['Nama Barang'] || row['Nama'] || row['Barang'] ||
+                                '',
+                            serial: row[headerMap['serial']] || row['Serial Number'] || row['Serial'] || '',
+                            type: row[headerMap['type']] || row['Jenis'] || row['Tipe'] || 'Laptop',
+                            user: row[headerMap['user']] || row['User'] || '-',
+                            pic: row[headerMap['pic']] || row['PIC'] || '-',
+                            lendDate: row[headerMap['lendDate']] || row['Lend Date'] || row['Tanggal Pinjam'] ||
+                            '',
+                            returnDate: row[headerMap['returnDate']] || row['Return Date'] || row[
+                                'Tanggal Kembali'] || '',
+                            description: row[headerMap['description']] || row['Description'] || row['Deskripsi'] ||
+                            ''
+                        };
+
+                        // Konversi date jika berupa angka (Excel date serial)
+                        if (item.lendDate && typeof item.lendDate === 'number') {
+                            const date = new Date((item.lendDate - 25569) * 86400 * 1000);
+                            item.lendDate = date.toISOString().split('T')[0];
+                        }
+                        if (item.returnDate && typeof item.returnDate === 'number') {
+                            const date = new Date((item.returnDate - 25569) * 86400 * 1000);
+                            item.returnDate = date.toISOString().split('T')[0];
+                        }
+
+                        return item;
+                    }).filter(item => item.name && item.name.trim() !== '');
+
+                    console.log('Data yang diimport:', importedData);
+
+                    if (importedData.length === 0) {
+                        alert('Tidak ada data valid yang ditemukan. Pastikan kolom "Nama Barang" terisi.');
+                        return;
+                    }
+
+                    showPreview(importedData);
+                } catch (err) {
+                    console.error('Error membaca file:', err);
+                    alert('Gagal membaca file: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showPreview(data) {
+            previewCount.textContent = data.length;
+            let html = '';
+            data.slice(0, 100).forEach((item, idx) => {
+                html += `<tr>
+                    <td><strong>${escapeHtml(item.name)}</strong></td>
+                    <td>${escapeHtml(item.serial || '-')}</td>
+                    <td><span class="badge">${escapeHtml(item.type)}</span></td>
+                    <td>${escapeHtml(item.user)}</td>
+                    <td>${escapeHtml(item.pic)}</td>
+                    <td>${formatDate(item.lendDate)}</td>
+                    <td>${formatDate(item.returnDate)}</td>
+                    <td class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</td>
+                </tr>`;
+            });
+            if (data.length > 100) {
+                html +=
+                    `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">... dan ${data.length - 100} baris lainnya</td></tr>`;
+            }
+            previewTableBody.innerHTML = html;
+            importPreview.style.display = 'block';
+        }
+
+        // ============================================================
         //  EVENT LISTENERS
         // ============================================================
 
@@ -1877,7 +1991,7 @@
             win.print();
         });
 
-        // ---- Import Excel ----
+        // ---- Import Excel Events ----
         uploadZone.addEventListener('click', () => fileInput.click());
 
         uploadZone.addEventListener('dragover', function(e) {
@@ -1902,97 +2016,28 @@
             if (this.files.length) {
                 handleFile(this.files[0]);
             }
+            // Reset input agar bisa upload file yang sama lagi
+            this.value = '';
         });
 
-        function handleFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-
-                    if (!jsonData || jsonData.length === 0) {
-                        alert('File Excel kosong atau tidak memiliki data.');
-                        return;
-                    }
-
-                    const columns = Object.keys(jsonData[0]);
-                    const headerMap = {};
-                    columns.forEach(col => {
-                        const lower = col.toLowerCase().trim();
-                        if (lower.includes('nama') || lower.includes('barang')) headerMap['name'] = col;
-                        else if (lower.includes('serial')) headerMap['serial'] = col;
-                        else if (lower.includes('jenis')) headerMap['type'] = col;
-                        else if (lower === 'user') headerMap['user'] = col;
-                        else if (lower.includes('pic') || lower.includes('penanggung')) headerMap['pic'] = col;
-                        else if (lower.includes('lend') || lower.includes('pinjam')) headerMap['lendDate'] = col;
-                        else if (lower.includes('return') || lower.includes('kembali')) headerMap['returnDate'] =
-                        col;
-                        else if (lower.includes('deskripsi') || lower.includes('description')) headerMap[
-                            'description'] = col;
-                    });
-
-                    importedData = jsonData.map(row => {
-                        const item = {
-                            name: row[headerMap['name']] || row['Nama Barang'] || '',
-                            serial: row[headerMap['serial']] || row['Serial Number'] || '',
-                            type: row[headerMap['type']] || row['Jenis'] || 'Laptop',
-                            user: row[headerMap['user']] || row['User'] || '-',
-                            pic: row[headerMap['pic']] || row['PIC'] || '-',
-                            lendDate: row[headerMap['lendDate']] || row['Lend Date'] || '',
-                            returnDate: row[headerMap['returnDate']] || row['Return Date'] || '',
-                            description: row[headerMap['description']] || row['Description'] || ''
-                        };
-                        if (!item.serial) item.serial = '';
-                        if (!item.description) item.description = '';
-                        return item;
-                    }).filter(item => item.name && item.name.trim() !== '');
-
-                    if (importedData.length === 0) {
-                        alert('Tidak ada data valid yang ditemukan. Pastikan kolom "Nama Barang" terisi.');
-                        return;
-                    }
-
-                    showPreview(importedData);
-                } catch (err) {
-                    alert('Gagal membaca file: ' + err.message);
-                    console.error(err);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function showPreview(data) {
-            previewCount.textContent = data.length;
-            let html = '';
-            data.slice(0, 100).forEach((item, idx) => {
-                html += `<tr>
-                    <td><strong>${escapeHtml(item.name)}</strong></td>
-                    <td>${escapeHtml(item.serial || '-')}</td>
-                    <td><span class="badge">${escapeHtml(item.type)}</span></td>
-                    <td>${escapeHtml(item.user)}</td>
-                    <td>${escapeHtml(item.pic)}</td>
-                    <td>${formatDate(item.lendDate)}</td>
-                    <td>${formatDate(item.returnDate)}</td>
-                    <td class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</td>
-                </tr>`;
-            });
-            if (data.length > 100) {
-                html +=
-                    `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">... dan ${data.length - 100} baris lainnya</td></tr>`;
-            }
-            previewTableBody.innerHTML = html;
-            importPreview.style.display = 'block';
-        }
-
+        // ---- Confirm Import ----
         confirmImportBtn.addEventListener('click', async function() {
-            if (importedData.length === 0) return;
+            if (importedData.length === 0) {
+                alert('Tidak ada data untuk diimport.');
+                return;
+            }
+
             const items = getItems();
             let added = 0;
+            let skipped = 0;
+
             for (const itemData of importedData) {
-                const exists = items.some(ex => ex.name === itemData.name && ex.serial === itemData.serial);
+                const exists = items.some(ex =>
+                    ex.name === itemData.name &&
+                    ex.serial === itemData.serial &&
+                    ex.type === itemData.type
+                );
+
                 if (!exists && itemData.name.trim() !== '') {
                     const item = {
                         name: itemData.name.trim(),
@@ -2004,22 +2049,31 @@
                         returnDate: itemData.returnDate || '',
                         description: itemData.description || ''
                     };
+
                     try {
                         await addItem(item);
                         added++;
                     } catch (error) {
                         console.error('Error importing item:', error);
+                        skipped++;
                     }
+                } else {
+                    skipped++;
                 }
             }
+
             renderInventory();
             populateLogSelect();
-            alert(`Berhasil mengimport ${added} barang baru. ${importedData.length - added} barang skip (duplikat atau tidak valid).`);
+
+            alert(`✅ Berhasil mengimport ${added} barang baru.\n` +
+                `⏭️ ${skipped} barang skip (duplikat atau tidak valid).`);
+
             importPreview.style.display = 'none';
             importedData = [];
             fileInput.value = '';
         });
 
+        // ---- Cancel Import ----
         cancelImportBtn.addEventListener('click', function() {
             importPreview.style.display = 'none';
             importedData = [];
@@ -2045,6 +2099,19 @@
 
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(templateData);
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 20 },
+                { wch: 15 },
+                { wch: 18 },
+                { wch: 12 },
+                { wch: 12 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 30 }
+            ];
+
             XLSX.utils.book_append_sheet(wb, ws, 'Template');
 
             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -2068,6 +2135,10 @@
 
         // Set active page
         navigateTo('inventory');
+
+        console.log('✅ IT Inventory Manager siap digunakan!');
+        console.log('📌 Fitur Import Excel: Upload file .xlsx atau .xls');
+        console.log('📌 Template Excel dapat didownload di halaman Import');
     </script>
 </body>
 </html>
