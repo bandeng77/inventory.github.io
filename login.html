@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - IT Inventory Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 40px;
+            padding: 3rem 2.5rem;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header .icon-wrapper {
+            background: #1a2639;
+            width: 72px;
+            height: 72px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 8px 24px rgba(26, 38, 57, 0.2);
+        }
+
+        .login-header .icon-wrapper i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .login-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .login-header p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1.2rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            border-color: #1a2639;
+            box-shadow: 0 0 0 4px rgba(26, 38, 57, 0.06);
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 30px;
+            background: #1a2639;
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 0.5rem;
+            height: 52px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(26, 38, 57, 0.25);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-login i {
+            color: #a0c0ff;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            background: white;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 52px;
+        }
+
+        .btn-google:hover {
+            border-color: #1a2639;
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .register-link a {
+            color: #1a2639;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle input {
+            padding-right: 3rem;
+        }
+
+        .password-toggle .toggle-btn {
+            position: absolute;
+            right: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
+        }
+
+        .password-toggle .toggle-btn:hover {
+            color: #475569;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="icon-wrapper">
+                <i class="fas fa-server"></i>
+            </div>
+            <h1>IT Inventory Manager</h1>
+            <p>Login untuk mengelola inventaris</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="errorText">Error message</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="emailInput" placeholder="email@domain.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="passwordInput" placeholder="Minimal 6 karakter" required autocomplete="current-password" />
+                    <button type="button" class="toggle-btn" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i>
+                <span id="loginBtnText">Login</span>
+            </button>
+        </form>
+
+        <div class="divider">atau</div>
+
+        <button class="btn-google" id="googleBtn">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+            </svg>
+            Login dengan Google
+        </button>
+
+        <div class="register-link">
+            Belum punya akun? <a id="registerLink">Daftar di sini</a>
+        </div>
+    </div>
+
+    <script>
+        // ==================== FIREBASE CONFIG ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtZe_Zo4EYD3QUe2aIveHnawRb3GXsVJM",
+            authDomain: "panduan-genetek.firebaseapp.com",
+            projectId: "panduan-genetek",
+            storageBucket: "panduan-genetek.firebasestorage.app",
+            messagingSenderId: "654454090409",
+            appId: "1:654454090409:web:d1c4bc92b9be50218c57b8"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ==================== DOM ELEMENTS ====================
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginBtnText = document.getElementById('loginBtnText');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const googleBtn = document.getElementById('googleBtn');
+        const registerLink = document.getElementById('registerLink');
+        const togglePassword = document.getElementById('togglePassword');
+
+        // ==================== HELPER FUNCTIONS ====================
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        function setLoading(loading) {
+            if (loading) {
+                loginBtn.disabled = true;
+                loginBtnText.innerHTML = '<span class="loading-spinner"></span> Loading...';
+            } else {
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Login';
+            }
+        }
+
+        function handleAuthError(error) {
+            let message = 'Terjadi kesalahan. Silakan coba lagi.';
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    message = 'Email tidak terdaftar. Silakan daftar terlebih dahulu.';
+                    break;
+                case 'auth/wrong-password':
+                    message = 'Password salah. Silakan coba lagi.';
+                    break;
+                case 'auth/invalid-email':
+                    message = 'Format email tidak valid.';
+                    break;
+                case 'auth/too-many-requests':
+                    message = 'Terlalu banyak percobaan. Coba lagi nanti.';
+                    break;
+                case 'auth/network-request-failed':
+                    message = 'Koneksi internet bermasalah. Periksa koneksi Anda.';
+                    break;
+                case 'auth/email-already-in-use':
+                    message = 'Email sudah terdaftar. Silakan login.';
+                    break;
+                case 'auth/weak-password':
+                    message = 'Password terlalu lemah. Minimal 6 karakter.';
+                    break;
+                default:
+                    message = error.message;
+            }
+            showError(message);
+        }
+
+        // ==================== TOGGLE PASSWORD ====================
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+
+        // ==================== LOGIN WITH EMAIL ====================
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showError('Silakan isi email dan password.');
+                return;
+            }
+
+            setLoading(true);
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // Redirect ke halaman utama
+                window.location.href = 'IT-Inventory.html';
+            } catch (error) {
+                handleAuthError(error);
+                setLoading(false);
+            }
+        });
+
+        // ==================== LOGIN WITH GOOGLE ====================
+        googleBtn.addEventListener('click', async function() {
+            setLoading(true);
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+                window.location.href = 'IT-Inventory.html';
+            } catch (error) {
+                if (error.code !== 'auth/popup-closed-by-user') {
+                    handleAuthError(error);
+                }
+                setLoading(false);
+            }
+        });
+
+        // ==================== REGISTER ====================
+        registerLink.addEventListener('click', async function() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showError('Silakan isi email dan password untuk mendaftar.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password minimal 6 karakter.');
+                return;
+            }
+
+            setLoading(true);
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+                // Set default display name
+                const user = auth.currentUser;
+                if (user) {
+                    await user.updateProfile({
+                        displayName: email.split('@')[0]
+                    });
+                }
+                window.location.href = 'IT-Inventory.html';
+            } catch (error) {
+                handleAuthError(error);
+                setLoading(false);
+            }
+        });
+
+        // ==================== AUTO REDIRECT IF ALREADY LOGGED IN ====================
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                // Already logged in, redirect to main page
+                window.location.href = 'IT-Inventory.html';
+            }
+        });
+
+        // ==================== KEYBOARD SHORTCUT: Enter to submit ====================
+        passwordInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                passwordInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
