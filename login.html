@@ -12,7 +12,6 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
         * {
@@ -376,7 +375,6 @@
 </head>
 <body>
     <div class="login-wrapper">
-        <!-- Left Side: Form -->
         <div class="login-left">
             <div class="login-header">
                 <div class="brand">
@@ -431,7 +429,12 @@
                 </button>
             </form>
 
-        <!-- Right Side: Branding -->
+            <div class="login-footer">
+                <span>Belum punya akun? </span>
+                <a id="registerLink">Hubungi Admin untuk daftar</a>
+            </div>
+        </div>
+
         <div class="login-right">
             <div class="icon-big">
                 <i class="fas fa-boxes"></i>
@@ -447,16 +450,15 @@
         const firebaseConfig = {
             apiKey: "AIzaSyAtZe_Zo4EYD3QUe2aIveHnawRb3GXsVJM",
             authDomain: "panduan-genetek.firebaseapp.com",
+            databaseURL: "https://panduan-genetek-default-rtdb.asia-southeast1.firebasedatabase.app/",
             projectId: "panduan-genetek",
             storageBucket: "panduan-genetek.firebasestorage.app",
             messagingSenderId: "654454090409",
             appId: "1:654454090409:web:d1c4bc92b9be50218c57b8"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
 
         // ==================== DOM ELEMENTS ====================
         const loginForm = document.getElementById('loginForm');
@@ -496,7 +498,7 @@
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
 
-        // ==================== LOGIN WITH FIREBASE AUTH ====================
+        // ==================== LOGIN ====================
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -511,33 +513,16 @@
             setLoading(true);
 
             try {
-                // Login menggunakan Firebase Authentication
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Ambil data user dari Firestore (opsional)
-                let userData = {};
-                try {
-                    const docRef = await db.collection('users').doc(user.uid).get();
-                    if (docRef.exists) {
-                        userData = docRef.data();
-                    }
-                } catch (e) {
-                    console.log('User data tidak ditemukan di Firestore');
-                }
-
-                // Simpan session
                 const sessionUser = {
                     id: user.uid,
                     email: user.email,
-                    displayName: user.displayName || userData.username || user.email?.split('@')[0] || 'User',
-                    username: userData.username || user.email?.split('@')[0] || 'User',
-                    role: userData.role || 'user'
+                    displayName: user.displayName || user.email?.split('@')[0] || 'User'
                 };
                 
                 localStorage.setItem('itUser', JSON.stringify(sessionUser));
-                
-                // Redirect ke halaman utama
                 window.location.href = 'index.html';
                 
             } catch (error) {
@@ -571,63 +556,12 @@
         // ==================== REGISTER LINK ====================
         registerLink.addEventListener('click', function(e) {
             e.preventDefault();
-            alert('Untuk mendaftar, silakan hubungi admin IT.\n\nAtau gunakan console untuk register user baru.');
-            
-            console.log('=== CARA REGISTER USER BARU ===');
-            console.log('1. Buka Firebase Console');
-            console.log('2. Pilih Authentication');
-            console.log('3. Klik "Add User"');
-            console.log('4. Masukkan email dan password');
-            console.log('5. Klik "Add User"');
-            console.log('');
-            console.log('Atau gunakan script di console:');
-            console.log(`
-// Register user via Firebase Auth
-async function registerUser(email, password, username = '') {
-    try {
-        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        // Update profile
-        if (username) {
-            await user.updateProfile({ displayName: username });
-        }
-        
-        // Simpan ke Firestore
-        await firebase.firestore().collection('users').doc(user.uid).set({
-            username: username || email.split('@')[0],
-            email: email,
-            role: 'user',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        console.log('✅ User berhasil didaftarkan!');
-        console.log('📧 Email:', email);
-        console.log('👤 Username:', username || email.split('@')[0]);
-        return true;
-    } catch (error) {
-        console.error('❌ Gagal register:', error);
-        return false;
-    }
-}
-
-// Contoh penggunaan:
-registerUser('admin@domain.com', 'admin123', 'admin');
-registerUser('budi@domain.com', 'budi123', 'budi');
-            `);
-        });
-
-        // ==================== KEYBOARD SHORTCUT ====================
-        passwordInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                loginForm.dispatchEvent(new Event('submit'));
-            }
+            alert('Untuk mendaftar, silakan hubungi admin IT');
         });
 
         // ==================== AUTO REDIRECT ====================
         auth.onAuthStateChanged(function(user) {
             if (user) {
-                // Already logged in, redirect to main page
                 window.location.href = 'index.html';
             }
         });
