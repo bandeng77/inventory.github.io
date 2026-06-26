@@ -1,1589 +1,2073 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IT Inventory Manager</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  
-  <!-- SheetJS untuk membaca file Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-
-    body {
-      background: #f1f5f9;
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      width: 260px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-right: 1px solid rgba(255,255,255,0.6);
-      padding: 2rem 1.2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      box-shadow: 4px 0 20px rgba(0,0,0,0.02);
-      z-index: 10;
-      transition: width 0.3s ease;
-    }
-
-    .sidebar-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: #0f172a;
-    }
-    .sidebar-brand i {
-      background: #1a2639;
-      color: white;
-      padding: 10px;
-      border-radius: 16px;
-    }
-
-    .sidebar-menu {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .sidebar-menu a {
-      text-decoration: none;
-      color: #334155;
-      padding: 0.7rem 1rem;
-      border-radius: 16px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      transition: 0.3s ease;
-      font-size: 0.95rem;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }
-
-    .sidebar-menu a::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 0;
-      height: 100%;
-      background: rgba(26, 38, 57, 0.05);
-      transition: width 0.3s ease;
-      border-radius: 16px;
-    }
-
-    .sidebar-menu a:hover::before {
-      width: 100%;
-    }
-
-    .sidebar-menu a i {
-      width: 22px;
-      color: #64748b;
-      position: relative;
-      z-index: 1;
-    }
-
-    .sidebar-menu a span {
-      position: relative;
-      z-index: 1;
-    }
-
-    .sidebar-menu a.active {
-      background: #1a2639;
-      color: white;
-      box-shadow: 0 8px 18px rgba(26, 38, 57, 0.2);
-    }
-    .sidebar-menu a.active i { color: #a0c0ff; }
-    .sidebar-menu a:hover:not(.active) { background: #eef2f7; }
-
-    .sidebar-footer {
-      margin-top: auto;
-      color: #94a3b8;
-      font-size: 0.7rem;
-      padding-top: 1rem;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .main {
-      flex: 1;
-      padding: 2rem 2rem 2.5rem;
-      max-width: 1400px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .page-section {
-      display: block;
-      animation: fadeIn 0.4s ease;
-    }
-    .page-section.hidden { display: none; }
-
-    .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .header-bar h1 {
-      font-weight: 700;
-      font-size: 1.8rem;
-      color: #0f172a;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn {
-      background: white;
-      border: none;
-      padding: 0.6rem 1.4rem;
-      border-radius: 60px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      color: #1e293b;
-      border: 1px solid #e2e8f0;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.02);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .btn:hover::after {
-      opacity: 1;
-    }
-
-    .btn-primary { background: #1a2639; color: white; border-color: #2c3e66; box-shadow: 0 8px 18px rgba(26,38,57,0.15); }
-    .btn-primary i { color: #a0c0ff; }
-    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 24px rgba(26,38,57,0.25); }
-    .btn-outline { background: transparent; }
-    .btn-outline:hover { background: white; border-color: #1a2639; transform: translateY(-2px); }
-    .btn-success { background: #059669; color: white; border-color: #047857; }
-    .btn-success i { color: #a7f3d0; }
-    .btn-success:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 24px rgba(5,150,105,0.3); }
-    .btn-warning { background: #d97706; color: white; border-color: #b45309; }
-    .btn-warning i { color: #fde68a; }
-    .btn-warning:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 24px rgba(217,119,6,0.3); }
-    .btn-danger { background: #dc2626; color: white; border-color: #b91c1c; }
-    .btn-danger i { color: #fca5a5; }
-    .btn-danger:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 24px rgba(220,38,38,0.3); }
-    .btn-logout { background: #dc2626; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 60px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center; }
-    .btn-logout:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(220,38,38,0.3); }
-    .btn-logout i { color: #fca5a5; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IT Inventory Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     
-    .user-info { display: flex; align-items: center; gap: 12px; color: #475569; font-size: 0.85rem; font-weight: 500; margin-bottom: 10px; }
-    .user-info .avatar { width: 36px; height: 36px; border-radius: 50%; background: #1a2639; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- SheetJS untuk membaca file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
 
-    .card {
-      background: rgba(255,255,255,0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 32px;
-      padding: 1.8rem 2rem;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.02);
-      border: 1px solid rgba(255,255,255,0.7);
-      margin-bottom: 2rem;
-      transition: all 0.4s ease;
-    }
+        body {
+            background: #f1f5f9;
+            display: flex;
+            min-height: 100vh;
+        }
 
-    .card-slide {
-      animation: slideDown 0.4s ease;
-    }
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 260px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 2rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.02);
+            z-index: 10;
+            transition: width 0.3s ease;
+        }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-      gap: 1rem 1.5rem;
-      align-items: start;
-    }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #0f172a;
+        }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      position: relative;
-      min-height: 90px;
-    }
-    .form-group label {
-      font-weight: 600;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: #475569;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      min-height: 20px;
-    }
-    .form-group select, .form-group input {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 30px;
-      padding: 0.6rem 1.2rem;
-      font-size: 0.85rem;
-      outline: none;
-      transition: all 0.3s ease;
-      width: 100%;
-      flex-shrink: 0;
-      height: 48px;
-    }
-    .form-group select:focus, .form-group input:focus {
-      border-color: #1a2639;
-      box-shadow: 0 0 0 4px rgba(26,38,57,0.06);
-    }
+        .sidebar-brand i {
+            background: #1a2639;
+            color: white;
+            padding: 10px;
+            border-radius: 16px;
+        }
 
-    .form-group textarea {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 20px;
-      padding: 0.6rem 1.2rem;
-      font-size: 0.85rem;
-      outline: none;
-      transition: all 0.3s ease;
-      width: 100%;
-      resize: vertical;
-      min-height: 48px;
-      font-family: 'Inter', sans-serif;
-    }
-    .form-group textarea:focus {
-      border-color: #1a2639;
-      box-shadow: 0 0 0 4px rgba(26,38,57,0.06);
-    }
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
-    .manual-input-wrapper-v3 {
-      height: 48px;
-      position: relative;
-      overflow: visible;
-      margin-top: 0;
-    }
+        .sidebar-menu a {
+            text-decoration: none;
+            color: #334155;
+            padding: 0.7rem 1rem;
+            border-radius: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: 0.3s ease;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
 
-    .manual-input-wrapper-v3 input {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: #f8fafc;
-      border: 1px solid #dce2ea;
-      border-radius: 30px;
-      padding: 0.6rem 1.2rem;
-      font-size: 0.85rem;
-      outline: none;
-      transition: opacity 0.3s ease, visibility 0.3s ease, border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
-      width: 100%;
-      opacity: 0;
-      visibility: hidden;
-      height: 100%;
-    }
+        .sidebar-menu a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 100%;
+            background: rgba(26, 38, 57, 0.05);
+            transition: width 0.3s ease;
+            border-radius: 16px;
+        }
 
-    .manual-input-wrapper-v3 input.visible {
-      opacity: 1;
-      visibility: visible;
-    }
+        .sidebar-menu a:hover::before {
+            width: 100%;
+        }
 
-    .manual-input-wrapper-v3 input:focus {
-      border-color: #1a2639;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(26,38,57,0.06);
-    }
+        .sidebar-menu a i {
+            width: 22px;
+            color: #64748b;
+            position: relative;
+            z-index: 1;
+        }
 
-    .manual-input-wrapper-v3 input::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
+        .sidebar-menu a span {
+            position: relative;
+            z-index: 1;
+        }
 
-    .btn-submit {
-      background: #1a2639;
-      color: white;
-      border: none;
-      padding: 0.6rem 1.5rem;
-      border-radius: 60px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 0.85rem;
-      position: relative;
-      overflow: hidden;
-      width: 100%;
-      height: 48px;
-      flex-shrink: 0;
-      margin-top: 0;
-    }
+        .sidebar-menu a.active {
+            background: #1a2639;
+            color: white;
+            box-shadow: 0 8px 18px rgba(26, 38, 57, 0.2);
+        }
 
-    .btn-submit::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.1);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
+        .sidebar-menu a.active i {
+            color: #a0c0ff;
+        }
 
-    .btn-submit:hover::after {
-      opacity: 1;
-    }
+        .sidebar-menu a:hover:not(.active) {
+            background: #eef2f7;
+        }
 
-    .btn-submit:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 24px rgba(26,38,57,0.3); }
+        .sidebar-footer {
+            margin-top: auto;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
 
-    .category-filter {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 1.5rem;
-      padding: 0.5rem 0;
-    }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #475569;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            padding: 0.5rem;
+            background: rgba(241, 245, 249, 0.5);
+            border-radius: 16px;
+        }
 
-    .category-chip {
-      padding: 0.5rem 1.2rem;
-      border-radius: 40px;
-      border: 2px solid #e2e8f0;
-      background: white;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.8rem;
-      transition: all 0.3s ease;
-      color: #475569;
-    }
+        .user-info .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1a2639;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
 
-    .category-chip:hover {
-      border-color: #94a3b8;
-      transform: translateY(-2px);
-    }
+        .user-info .user-detail {
+            flex: 1;
+            min-width: 0;
+        }
 
-    .category-chip.active {
-      background: #1a2639;
-      color: white;
-      border-color: #1a2639;
-      box-shadow: 0 4px 12px rgba(26,38,57,0.2);
-    }
+        .user-info .user-detail .name {
+            font-weight: 600;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-    .category-chip i {
-      margin-right: 6px;
-    }
+        .user-info .user-detail .email {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-    .upload-zone {
-      border: 2px dashed #cbd5e1;
-      border-radius: 24px;
-      padding: 3rem 2rem;
-      text-align: center;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      background: rgba(255,255,255,0.3);
-    }
+        .btn-logout {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
 
-    .upload-zone:hover {
-      border-color: #1a2639;
-      background: rgba(255,255,255,0.6);
-    }
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+        }
 
-    .upload-zone.dragover {
-      border-color: #1a2639;
-      background: rgba(26,38,57,0.05);
-    }
+        .btn-logout i {
+            color: #fca5a5;
+        }
 
-    .upload-zone i {
-      font-size: 3rem;
-      color: #94a3b8;
-      margin-bottom: 1rem;
-    }
+        /* ===== MAIN ===== */
+        .main {
+            flex: 1;
+            padding: 2rem 2rem 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-    .upload-zone h3 {
-      color: #1e293b;
-      margin-bottom: 0.5rem;
-    }
+        .page-section {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
 
-    .upload-zone p {
-      color: #94a3b8;
-      font-size: 0.9rem;
-    }
+        .page-section.hidden {
+            display: none;
+        }
 
-    .upload-zone input[type="file"] {
-      display: none;
-    }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
 
-    .table-container {
-      background: white;
-      border-radius: 28px;
-      overflow-x: auto;
-      border: 1px solid rgba(255,255,255,0.5);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-      transition: all 0.3s ease;
-    }
+        .header-bar h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-    .table-container:hover {
-      box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-    }
+        /* ===== BUTTONS ===== */
+        .btn {
+            background: white;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 900px; }
-    th { text-align: left; padding: 1rem 1rem; background: #f8fafc; font-weight: 600; color: #1e293b; border-bottom: 2px solid #eef2f7; }
-    td { padding: 0.9rem 1rem; border-bottom: 1px solid #f1f5f9; transition: background 0.2s ease; }
-    tr:hover td { background: #fafcff; }
-    .badge { background: #eef2ff; padding: 3px 12px; border-radius: 40px; font-size: 0.7rem; font-weight: 500; }
-    .badge.rusak { background: #fee2e2; color: #991b1b; }
-    .badge.ganti { background: #d1fae5; color: #065f46; }
-    .badge.success { background: #d1fae5; color: #065f46; }
-    .badge.warning { background: #fef3c7; color: #92400e; }
-    .empty-row td { text-align: center; padding: 2.5rem 0; color: #94a3b8; }
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.02);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
 
-    .filter-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 1.2rem;
-      align-items: center;
-    }
-    .filter-bar input, .filter-bar select {
-      padding: 0.4rem 1rem;
-      border-radius: 40px;
-      border: 1px solid #e2e8f0;
-      background: white;
-      font-size: 0.8rem;
-      outline: none;
-      transition: all 0.3s ease;
-      height: 40px;
-    }
-    .filter-bar input:focus, .filter-bar select:focus { border-color: #1a2639; box-shadow: 0 0 0 4px rgba(26,38,57,0.06); }
+        .btn:hover::after {
+            opacity: 1;
+        }
 
-    .text-muted { color: #94a3b8; font-size: 0.75rem; }
-    .text-truncate { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+        .btn-primary {
+            background: #1a2639;
+            color: white;
+            border-color: #2c3e66;
+            box-shadow: 0 8px 18px rgba(26, 38, 57, 0.15);
+        }
 
-    .import-preview {
-      max-height: 300px;
-      overflow-y: auto;
-    }
+        .btn-primary i {
+            color: #a0c0ff;
+        }
 
-    .action-buttons-cell {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(26, 38, 57, 0.25);
+        }
 
-    .action-buttons-cell .btn {
-      padding: 0.2rem 0.8rem;
-      font-size: 0.7rem;
-    }
+        .btn-outline {
+            background: transparent;
+        }
 
-    @media (max-width: 768px) {
-      .sidebar { width: 72px; padding: 1rem 0.5rem; align-items: center; }
-      .sidebar-brand span, .sidebar-menu a span, .sidebar-footer span { display: none; }
-      .sidebar-menu a { justify-content: center; padding: 0.6rem; }
-      .sidebar-menu a i { margin: 0; }
-      .main { padding: 1.2rem; }
-      .form-group { min-height: 80px; }
-      .manual-input-wrapper-v3 { height: 42px; }
-      .form-group select, .form-group input { height: 42px; }
-      .btn-submit { height: 42px; padding: 0.4rem 1rem; font-size: 0.8rem; }
-      table { min-width: 700px; }
-      .upload-zone { padding: 2rem 1rem; }
-      .user-info span { display: none; }
-      .btn-logout span { display: none; }
-    }
+        .btn-outline:hover {
+            background: white;
+            border-color: #1a2639;
+            transform: translateY(-2px);
+        }
 
-    @keyframes fadeIn {
-      0% { opacity: 0; transform: translateY(10px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
+        .btn-success {
+            background: #059669;
+            color: white;
+            border-color: #047857;
+        }
 
-    @keyframes slideDown {
-      0% { opacity: 0; transform: translateY(-15px) scale(0.98); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
+        .btn-success i {
+            color: #a7f3d0;
+        }
 
-    .fade-row {
-      animation: fadeIn 0.3s ease;
-    }
-  </style>
+        .btn-success:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-warning {
+            background: #d97706;
+            color: white;
+            border-color: #b45309;
+        }
+
+        .btn-warning i {
+            color: #fde68a;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(217, 119, 6, 0.3);
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            border-color: #b91c1c;
+        }
+
+        .btn-danger i {
+            color: #fca5a5;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(220, 38, 38, 0.3);
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 1.8rem 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+            transition: all 0.4s ease;
+        }
+
+        .card-slide {
+            animation: slideDown 0.4s ease;
+        }
+
+        /* ===== FORMS ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem 1.5rem;
+            align-items: start;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            min-height: 90px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            min-height: 20px;
+        }
+
+        .form-group select,
+        .form-group input {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.3s ease;
+            width: 100%;
+            flex-shrink: 0;
+            height: 48px;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            border-color: #1a2639;
+            box-shadow: 0 0 0 4px rgba(26, 38, 57, 0.06);
+        }
+
+        .form-group textarea {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.3s ease;
+            width: 100%;
+            resize: vertical;
+            min-height: 48px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-group textarea:focus {
+            border-color: #1a2639;
+            box-shadow: 0 0 0 4px rgba(26, 38, 57, 0.06);
+        }
+
+        .manual-input-wrapper-v3 {
+            height: 48px;
+            position: relative;
+            overflow: visible;
+            margin-top: 0;
+        }
+
+        .manual-input-wrapper-v3 input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f8fafc;
+            border: 1px solid #dce2ea;
+            border-radius: 30px;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+            outline: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease, border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+            opacity: 0;
+            visibility: hidden;
+            height: 100%;
+        }
+
+        .manual-input-wrapper-v3 input.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .manual-input-wrapper-v3 input:focus {
+            border-color: #1a2639;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(26, 38, 57, 0.06);
+        }
+
+        .manual-input-wrapper-v3 input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .btn-submit {
+            background: #1a2639;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 60px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 48px;
+            flex-shrink: 0;
+            margin-top: 0;
+        }
+
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-submit:hover::after {
+            opacity: 1;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(26, 38, 57, 0.3);
+        }
+
+        /* ===== CATEGORY FILTER ===== */
+        .category-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .category-chip {
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            color: #475569;
+        }
+
+        .category-chip:hover {
+            border-color: #94a3b8;
+            transform: translateY(-2px);
+        }
+
+        .category-chip.active {
+            background: #1a2639;
+            color: white;
+            border-color: #1a2639;
+            box-shadow: 0 4px 12px rgba(26, 38, 57, 0.2);
+        }
+
+        .category-chip i {
+            margin-right: 6px;
+        }
+
+        /* ===== UPLOAD ZONE ===== */
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .upload-zone:hover {
+            border-color: #1a2639;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .upload-zone.dragover {
+            border-color: #1a2639;
+            background: rgba(26, 38, 57, 0.05);
+        }
+
+        .upload-zone i {
+            font-size: 3rem;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone h3 {
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .upload-zone input[type="file"] {
+            display: none;
+        }
+
+        /* ===== TABLE ===== */
+        .table-container {
+            background: white;
+            border-radius: 28px;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .table-container:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 900px;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem 1rem;
+            background: #f8fafc;
+            font-weight: 600;
+            color: #1e293b;
+            border-bottom: 2px solid #eef2f7;
+        }
+
+        td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s ease;
+        }
+
+        tr:hover td {
+            background: #fafcff;
+        }
+
+        .badge {
+            background: #eef2ff;
+            padding: 3px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .badge.rusak {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge.ganti {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .empty-row td {
+            text-align: center;
+            padding: 2.5rem 0;
+            color: #94a3b8;
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 1.2rem;
+            align-items: center;
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            font-size: 0.8rem;
+            outline: none;
+            transition: all 0.3s ease;
+            height: 40px;
+        }
+
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            border-color: #1a2639;
+            box-shadow: 0 0 0 4px rgba(26, 38, 57, 0.06);
+        }
+
+        .text-muted {
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+
+        .text-truncate {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .import-preview {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .action-buttons-cell {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons-cell .btn {
+            padding: 0.2rem 0.8rem;
+            font-size: 0.7rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 72px;
+                padding: 1rem 0.5rem;
+                align-items: center;
+            }
+
+            .sidebar-brand span,
+            .sidebar-menu a span,
+            .sidebar-footer span {
+                display: none;
+            }
+
+            .sidebar-menu a {
+                justify-content: center;
+                padding: 0.6rem;
+            }
+
+            .sidebar-menu a i {
+                margin: 0;
+            }
+
+            .main {
+                padding: 1.2rem;
+            }
+
+            .form-group {
+                min-height: 80px;
+            }
+
+            .manual-input-wrapper-v3 {
+                height: 42px;
+            }
+
+            .form-group select,
+            .form-group input {
+                height: 42px;
+            }
+
+            .btn-submit {
+                height: 42px;
+                padding: 0.4rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            table {
+                min-width: 700px;
+            }
+
+            .upload-zone {
+                padding: 2rem 1rem;
+            }
+
+            .user-info .email {
+                display: none;
+            }
+
+            .user-info .name {
+                font-size: 0.7rem;
+            }
+
+            .btn-logout span {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-bar h1 {
+                font-size: 1.3rem;
+            }
+
+            .card {
+                padding: 1.2rem 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-15px) scale(0.98);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .fade-row {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-<!-- sidebar -->
-<div class="sidebar">
-  <div class="sidebar-brand"><i class="fas fa-server"></i><span>IT Inventory</span></div>
-  <div class="sidebar-menu">
-    <a href="#" class="active" data-page="inventory"><i class="fas fa-boxes"></i><span>Daftar Barang</span></a>
-    <a href="#" data-page="logs"><i class="fas fa-clipboard-list"></i><span>Log Kerusakan</span></a>
-    <a href="#" data-page="import"><i class="fas fa-file-import"></i><span>Import Excel</span></a>
-  </div>
-  <div class="sidebar-footer">
-    <div class="user-info">
-      <div class="avatar" id="userAvatar">U</div>
-      <span id="userNameDisplay">User</span>
-    </div>
-    <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
-  </div>
-</div>
 
-<!-- main -->
-<div class="main">
-  <!-- ===== INVENTORY PAGE ===== -->
-  <div id="inventoryPage" class="page-section">
-    <div class="header-bar">
-      <h1><i class="fas fa-boxes" style="color:#1a2639;"></i> Inventaris Barang</h1>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" id="showAddItemBtn"><i class="fas fa-plus"></i> Tambah Barang</button>
-        <button class="btn btn-success" id="goToImportBtn"><i class="fas fa-file-import"></i> Import Excel</button>
-      </div>
-    </div>
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-server"></i>
+            <span>IT Inventory</span>
+        </div>
 
-    <!-- form tambah barang -->
-    <div class="card" id="addItemCard" style="display:none;">
-      <form id="itemForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label><i class="fas fa-tag"></i> Nama Barang</label>
-            <input type="text" id="itemName" placeholder="Nama barang" required />
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-barcode"></i> Serial Number</label>
-            <input type="text" id="itemSerial" placeholder="Serial number" />
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-cubes"></i> Jenis Barang</label>
-            <select id="itemType">
-              <option value="Laptop">Laptop</option>
-              <option value="Monitor">Monitor</option>
-              <option value="Printer">Printer</option>
-              <option value="Keyboard & Mouse">Keyboard & Mouse</option>
-              <option value="other">➕ Other</option>
-            </select>
-            <div class="manual-input-wrapper-v3">
-              <input type="text" id="manualTypeV3" placeholder="Masukkan jenis lain..." />
+        <div class="sidebar-menu">
+            <a href="#" class="active" data-page="inventory">
+                <i class="fas fa-boxes"></i>
+                <span>Daftar Barang</span>
+            </a>
+            <a href="#" data-page="logs">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Log Kerusakan</span>
+            </a>
+            <a href="#" data-page="import">
+                <i class="fas fa-file-import"></i>
+                <span>Import Excel</span>
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="avatar" id="userAvatar">U</div>
+                <div class="user-detail">
+                    <div class="name" id="userNameDisplay">User</div>
+                    <div class="email" id="userEmailDisplay">user@email.com</div>
+                </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-user"></i> User</label>
-            <input type="text" id="itemUser" placeholder="Nama user" />
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-user-tie"></i> PIC</label>
-            <input type="text" id="itemPic" placeholder="Penanggung jawab" />
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-calendar-alt"></i> Lend Date</label>
-            <input type="date" id="itemLendDate" />
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-calendar-check"></i> Return Date</label>
-            <input type="date" id="itemReturnDate" />
-          </div>
-          <div class="form-group" style="grid-column: span 2;">
-            <label><i class="fas fa-align-left"></i> Description</label>
-            <input type="text" id="itemDescription" placeholder="Deskripsi barang..." />
-          </div>
-          <div class="form-group">
-            <label>&nbsp;</label>
-            <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Simpan</button>
-          </div>
+            <button class="btn-logout" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
         </div>
-      </form>
     </div>
 
-    <!-- Category Filter Chips -->
-    <div class="category-filter" id="categoryFilter">
-      <button class="category-chip active" data-category="all"><i class="fas fa-th-list"></i> Semua</button>
-      <button class="category-chip" data-category="Laptop"><i class="fas fa-laptop"></i> Laptop</button>
-      <button class="category-chip" data-category="Monitor"><i class="fas fa-desktop"></i> Monitor</button>
-      <button class="category-chip" data-category="Printer"><i class="fas fa-print"></i> Printer</button>
-      <button class="category-chip" data-category="Keyboard & Mouse"><i class="fas fa-keyboard"></i> Keyboard & Mouse</button>
-      <button class="category-chip" data-category="other"><i class="fas fa-plus-circle"></i> Lainnya</button>
-    </div>
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main">
 
-    <!-- filter & sort -->
-    <div class="filter-bar">
-      <input type="text" id="searchInventory" placeholder="🔍 Cari barang, serial, user, PIC..." />
-      <select id="sortInventory">
-        <option value="name">Sortir: Nama</option>
-        <option value="type">Jenis</option>
-        <option value="serial">Serial Number</option>
-        <option value="user">User</option>
-        <option value="lendDate">Lend Date</option>
-        <option value="returnDate">Return Date</option>
-      </select>
-      <button class="btn btn-outline" id="resetFilterInv"><i class="fas fa-undo"></i> Reset</button>
-    </div>
-
-    <div class="table-container">
-      <table>
-        <thead><tr>
-          <th>Nama</th>
-          <th>Serial</th>
-          <th>Jenis</th>
-          <th>User</th>
-          <th>PIC</th>
-          <th>Lend Date</th>
-          <th>Return Date</th>
-          <th>Deskripsi</th>
-          <th>Aksi</th>
-        </tr></thead>
-        <tbody id="inventoryTableBody"><tr class="empty-row"><td colspan="9">Belum ada barang</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ===== LOGS PAGE ===== -->
-  <div id="logsPage" class="page-section hidden">
-    <div class="header-bar">
-      <h1><i class="fas fa-clipboard-list" style="color:#1a2639;"></i> Log Rusak & Pergantian</h1>
-      <button class="btn btn-primary" id="showAddLogBtn"><i class="fas fa-plus"></i> Tambah Log</button>
-    </div>
-
-    <!-- form log -->
-    <div class="card" id="addLogCard" style="display:none;">
-      <form id="logForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label><i class="fas fa-cubes"></i> Jenis Barang</label>
-            <select id="logCategoryFilter">
-              <option value="all">Semua Jenis</option>
-              <option value="Laptop">Laptop</option>
-              <option value="Monitor">Monitor</option>
-              <option value="Printer">Printer</option>
-              <option value="Keyboard & Mouse">Keyboard & Mouse</option>
-              <option value="other">Lainnya</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-box"></i> Barang</label>
-            <select id="logItemSelect">
-              <option value="">-- pilih jenis dahulu --</option>
-            </select>
-            <div class="manual-input-wrapper-v3">
-              <input type="text" id="logManualItemV3" placeholder="Masukkan nama barang..." />
+        <!-- ===== INVENTORY PAGE ===== -->
+        <div id="inventoryPage" class="page-section">
+            <div class="header-bar">
+                <h1><i class="fas fa-boxes" style="color:#1a2639;"></i> Inventaris Barang</h1>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" id="showAddItemBtn">
+                        <i class="fas fa-plus"></i> Tambah Barang
+                    </button>
+                    <button class="btn btn-success" id="goToImportBtn">
+                        <i class="fas fa-file-import"></i> Import Excel
+                    </button>
+                </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-clipboard-list"></i> Tipe Log</label>
-            <select id="logType">
-              <option value="rusak">🚨 Rusak</option>
-              <option value="ganti">🔄 Pergantian</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-search"></i> Root Cause</label>
-            <select id="logRoot">
-              <option value="Hardware failure">Hardware failure</option>
-              <option value="Software error">Software error</option>
-              <option value="User mistake">User mistake</option>
-              <option value="Other">➕ Other</option>
-            </select>
-            <div class="manual-input-wrapper-v3">
-              <input type="text" id="logManualRootV3" placeholder="Masukkan root cause..." />
-            </div>
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-calendar-alt"></i> Tanggal</label>
-            <input type="date" id="logDate" />
-          </div>
-          <div class="form-group">
-            <label>&nbsp;</label>
-            <button type="submit" class="btn-submit"><i class="fas fa-plus-circle"></i> Tambah</button>
-          </div>
-        </div>
-      </form>
-    </div>
 
-    <!-- filter log -->
-    <div class="filter-bar">
-      <input type="text" id="searchLog" placeholder="🔍 Cari log..." />
-      <select id="filterLogType"><option value="all">Semua tipe</option><option value="rusak">Rusak</option><option value="ganti">Pergantian</option></select>
-      <button class="btn btn-outline" id="resetFilterLog"><i class="fas fa-undo"></i> Reset</button>
-      <button class="btn btn-outline" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF</button>
-    </div>
-
-    <div class="table-container">
-      <table>
-        <thead><tr><th>Barang</th><th>Tipe</th><th>Root Cause</th><th>Tanggal</th><th>Aksi</th></tr></thead>
-        <tbody id="logTableBody"><tr class="empty-row"><td colspan="5">Belum ada log</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ===== IMPORT PAGE ===== -->
-  <div id="importPage" class="page-section hidden">
-    <div class="header-bar">
-      <h1><i class="fas fa-file-import" style="color:#059669;"></i> Import Excel</h1>
-      <button class="btn btn-outline" id="backToInventoryBtn"><i class="fas fa-arrow-left"></i> Kembali</button>
-    </div>
-
-    <div class="card">
-      <div class="form-grid" style="margin-bottom:1.5rem;">
-        <div class="form-group" style="grid-column: span 2;">
-          <label><i class="fas fa-download"></i> Download Template Excel</label>
-          <button class="btn btn-warning" id="downloadTemplateBtn" style="width:100%; justify-content:center; height:48px;">
-            <i class="fas fa-file-excel"></i> Download Template
-          </button>
-          <p style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">
-            Template berisi kolom: Nama Barang, Serial Number, Jenis, User, PIC, Lend Date, Return Date, Description
-          </p>
-        </div>
-      </div>
-
-      <div class="upload-zone" id="uploadZone">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <h3>Drag & drop file Excel di sini</h3>
-        <p>atau klik untuk memilih file (.xlsx, .xls)</p>
-        <input type="file" id="fileInput" accept=".xlsx,.xls" />
-      </div>
-
-      <div id="importPreview" style="display:none; margin-top:1.5rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
-          <h3 style="font-size:1rem; color:#0f172a;">
-            <i class="fas fa-eye"></i> Preview Data
-            <span class="badge" id="previewCount">0</span> baris
-          </h3>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-outline" id="cancelImportBtn"><i class="fas fa-times"></i> Batal</button>
-            <button class="btn btn-success" id="confirmImportBtn"><i class="fas fa-check"></i> Import Semua</button>
-          </div>
-        </div>
-        <div class="table-container import-preview">
-          <table>
-            <thead><tr>
-              <th>Nama</th>
-              <th>Serial</th>
-              <th>Jenis</th>
-              <th>User</th>
-              <th>PIC</th>
-              <th>Lend Date</th>
-              <th>Return Date</th>
-              <th>Deskripsi</th>
-            </tr></thead>
-            <tbody id="previewTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  (function() {
-    // ==================== FIREBASE CONFIG ====================
-    const firebaseConfig = {
-        apiKey: "AIzaSyAtZe_Zo4EYD3QUe2aIveHnawRb3GXsVJM",
-        authDomain: "panduan-genetek.firebaseapp.com",
-        projectId: "panduan-genetek",
-        storageBucket: "panduan-genetek.firebasestorage.app",
-        messagingSenderId: "654454090409",
-        appId: "1:654454090409:web:d1c4bc92b9be50218c57b8"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // ==================== SESSION MANAGEMENT ====================
-    let currentUser = null;
-
-    function checkAuth() {
-        const userData = localStorage.getItem('itUser');
-        if (!userData) {
-            window.location.href = 'login.html';
-            return false;
-        }
-        try {
-            currentUser = JSON.parse(userData);
-            if (!currentUser.id) {
-                window.location.href = 'login.html';
-                return false;
-            }
-            // Update UI
-            document.getElementById('userNameDisplay').textContent = currentUser.displayName || currentUser.username || 'User';
-            document.getElementById('userAvatar').textContent = (currentUser.displayName || currentUser.username || 'U').charAt(0).toUpperCase();
-            return true;
-        } catch (e) {
-            window.location.href = 'login.html';
-            return false;
-        }
-    }
-
-    // ==================== LOGOUT ====================
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-        localStorage.removeItem('itUser');
-        window.location.href = 'login.html';
-    });
-
-    // ==================== FIRESTORE HELPERS ====================
-    const COLLECTION_ITEMS = 'itItems';
-    const COLLECTION_LOGS = 'itLogs';
-
-    async function loadAllData() {
-        if (!currentUser) return;
-        try {
-            await Promise.all([
-                loadItemsFromFirestore(),
-                loadLogsFromFirestore()
-            ]);
-            renderInventory();
-            renderLogs();
-            populateLogSelect();
-        } catch (error) {
-            console.error('Error loading data:', error);
-            alert('Gagal memuat data. Silakan refresh halaman.');
-        }
-    }
-
-    // ----- ITEMS -----
-    async function loadItemsFromFirestore() {
-        try {
-            const snapshot = await db.collection(COLLECTION_ITEMS)
-                .where('userId', '==', currentUser.id)
-                .orderBy('createdAt', 'desc')
-                .get();
-            
-            const items = [];
-            snapshot.forEach(doc => {
-                items.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            
-            window._items = items;
-            return items;
-        } catch (error) {
-            console.error('Error loading items:', error);
-            window._items = [];
-            return [];
-        }
-    }
-
-    async function saveItemToFirestore(item) {
-        if (!currentUser) throw new Error('User not authenticated');
-        try {
-            const docRef = await db.collection(COLLECTION_ITEMS).add({
-                ...item,
-                userId: currentUser.id,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            return { id: docRef.id, ...item };
-        } catch (error) {
-            console.error('Error saving item:', error);
-            throw error;
-        }
-    }
-
-    async function deleteItemFromFirestore(itemId) {
-        if (!currentUser) throw new Error('User not authenticated');
-        try {
-            await db.collection(COLLECTION_ITEMS).doc(itemId).delete();
-        } catch (error) {
-            console.error('Error deleting item:', error);
-            throw error;
-        }
-    }
-
-    // ----- LOGS -----
-    async function loadLogsFromFirestore() {
-        try {
-            const snapshot = await db.collection(COLLECTION_LOGS)
-                .where('userId', '==', currentUser.id)
-                .orderBy('createdAt', 'desc')
-                .get();
-            
-            const logs = [];
-            snapshot.forEach(doc => {
-                logs.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            
-            window._logs = logs;
-            return logs;
-        } catch (error) {
-            console.error('Error loading logs:', error);
-            window._logs = [];
-            return [];
-        }
-    }
-
-    async function saveLogToFirestore(log) {
-        if (!currentUser) throw new Error('User not authenticated');
-        try {
-            const docRef = await db.collection(COLLECTION_LOGS).add({
-                ...log,
-                userId: currentUser.id,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            return { id: docRef.id, ...log };
-        } catch (error) {
-            console.error('Error saving log:', error);
-            throw error;
-        }
-    }
-
-    async function deleteLogFromFirestore(logId) {
-        if (!currentUser) throw new Error('User not authenticated');
-        try {
-            await db.collection(COLLECTION_LOGS).doc(logId).delete();
-        } catch (error) {
-            console.error('Error deleting log:', error);
-            throw error;
-        }
-    }
-
-    // ==================== GETTERS ====================
-    function getItems() { return window._items || []; }
-    function getLogs() { return window._logs || []; }
-
-    // ==================== SETTERS ====================
-    async function addItem(item) {
-        const saved = await saveItemToFirestore(item);
-        window._items.unshift(saved);
-        return saved;
-    }
-
-    async function removeItem(index) {
-        const items = getItems();
-        if (index >= 0 && index < items.length) {
-            const item = items[index];
-            if (item.id) {
-                await deleteItemFromFirestore(item.id);
-            }
-            items.splice(index, 1);
-            window._items = items;
-        }
-    }
-
-    async function addLog(log) {
-        const saved = await saveLogToFirestore(log);
-        window._logs.unshift(saved);
-        return saved;
-    }
-
-    async function removeLog(index) {
-        const logs = getLogs();
-        if (index >= 0 && index < logs.length) {
-            const log = logs[index];
-            if (log.id) {
-                await deleteLogFromFirestore(log.id);
-            }
-            logs.splice(index, 1);
-            window._logs = logs;
-        }
-    }
-
-    // ==================== RENDER FUNCTIONS ====================
-    function renderInventory() {
-        let items = getItems();
-        const search = document.getElementById('searchInventory').value.toLowerCase();
-        const sort = document.getElementById('sortInventory').value;
-        const activeCategory = window._activeCategory || 'all';
-
-        if (activeCategory !== 'all') {
-            items = items.filter(it => it.type === activeCategory);
-        }
-
-        if (search) {
-            items = items.filter(it => 
-                it.name.toLowerCase().includes(search) ||
-                (it.serial && it.serial.toLowerCase().includes(search)) ||
-                it.type.toLowerCase().includes(search) ||
-                it.user.toLowerCase().includes(search) ||
-                it.pic.toLowerCase().includes(search) ||
-                (it.description && it.description.toLowerCase().includes(search))
-            );
-        }
-
-        if (sort === 'name') items.sort((a,b) => a.name.localeCompare(b.name));
-        else if (sort === 'type') items.sort((a,b) => a.type.localeCompare(b.type));
-        else if (sort === 'serial') items.sort((a,b) => (a.serial || '').localeCompare(b.serial || ''));
-        else if (sort === 'user') items.sort((a,b) => a.user.localeCompare(b.user));
-        else if (sort === 'lendDate') items.sort((a,b) => (a.lendDate || '').localeCompare(b.lendDate || ''));
-        else if (sort === 'returnDate') items.sort((a,b) => (a.returnDate || '').localeCompare(b.returnDate || ''));
-
-        const tbody = document.getElementById('inventoryTableBody');
-        if (!items.length) { 
-            tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Tidak ada barang${activeCategory !== 'all' ? ' di kategori ' + activeCategory : ''}</td></tr>`; 
-            return; 
-        }
-
-        let html = '';
-        items.forEach((item, idx) => {
-            const realIndex = getItems().indexOf(item);
-            html += `<tr class="fade-row">
-                <td><strong>${escapeHtml(item.name)}</strong></td>
-                <td><span class="badge">${escapeHtml(item.serial || '-')}</span></td>
-                <td><span class="badge">${escapeHtml(item.type)}</span></td>
-                <td>${escapeHtml(item.user)}</td>
-                <td>${escapeHtml(item.pic)}</td>
-                <td>${formatDate(item.lendDate)}</td>
-                <td>${formatDate(item.returnDate)}</td>
-                <td><span class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</span></td>
-                <td>
-                    <div class="action-buttons-cell">
-                        <button class="btn btn-danger btn-add-log" data-item-name="${escapeHtml(item.name)}" data-item-type="${escapeHtml(item.type)}" title="Tambah ke Log Kerusakan"><i class="fas fa-clipboard-plus"></i></button>
-                        <button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-inv-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button>
+            <!-- Form Tambah Barang -->
+            <div class="card" id="addItemCard" style="display:none;">
+                <form id="itemForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-tag"></i> Nama Barang</label>
+                            <input type="text" id="itemName" placeholder="Nama barang" required />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-barcode"></i> Serial Number</label>
+                            <input type="text" id="itemSerial" placeholder="Serial number" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-cubes"></i> Jenis Barang</label>
+                            <select id="itemType">
+                                <option value="Laptop">Laptop</option>
+                                <option value="Monitor">Monitor</option>
+                                <option value="Printer">Printer</option>
+                                <option value="Keyboard & Mouse">Keyboard & Mouse</option>
+                                <option value="other">➕ Other</option>
+                            </select>
+                            <div class="manual-input-wrapper-v3">
+                                <input type="text" id="manualTypeV3" placeholder="Masukkan jenis lain..." />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> User</label>
+                            <input type="text" id="itemUser" placeholder="Nama user" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-user-tie"></i> PIC</label>
+                            <input type="text" id="itemPic" placeholder="Penanggung jawab" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> Lend Date</label>
+                            <input type="date" id="itemLendDate" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-check"></i> Return Date</label>
+                            <input type="date" id="itemReturnDate" />
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label><i class="fas fa-align-left"></i> Description</label>
+                            <input type="text" id="itemDescription" placeholder="Deskripsi barang..." />
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn-submit">
+                                <i class="fas fa-save"></i> Simpan
+                            </button>
+                        </div>
                     </div>
-                </td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-        
-        tbody.querySelectorAll('[data-inv-idx]').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const idx = parseInt(this.dataset.invIdx, 10);
-                if (confirm('Hapus barang ini?')) {
+                </form>
+            </div>
+
+            <!-- Category Filter Chips -->
+            <div class="category-filter" id="categoryFilter">
+                <button class="category-chip active" data-category="all">
+                    <i class="fas fa-th-list"></i> Semua
+                </button>
+                <button class="category-chip" data-category="Laptop">
+                    <i class="fas fa-laptop"></i> Laptop
+                </button>
+                <button class="category-chip" data-category="Monitor">
+                    <i class="fas fa-desktop"></i> Monitor
+                </button>
+                <button class="category-chip" data-category="Printer">
+                    <i class="fas fa-print"></i> Printer
+                </button>
+                <button class="category-chip" data-category="Keyboard & Mouse">
+                    <i class="fas fa-keyboard"></i> Keyboard & Mouse
+                </button>
+                <button class="category-chip" data-category="other">
+                    <i class="fas fa-plus-circle"></i> Lainnya
+                </button>
+            </div>
+
+            <!-- Filter & Sort -->
+            <div class="filter-bar">
+                <input type="text" id="searchInventory" placeholder="🔍 Cari barang, serial, user, PIC..." />
+                <select id="sortInventory">
+                    <option value="name">Sortir: Nama</option>
+                    <option value="type">Jenis</option>
+                    <option value="serial">Serial Number</option>
+                    <option value="user">User</option>
+                    <option value="lendDate">Lend Date</option>
+                    <option value="returnDate">Return Date</option>
+                </select>
+                <button class="btn btn-outline" id="resetFilterInv">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Serial</th>
+                            <th>Jenis</th>
+                            <th>User</th>
+                            <th>PIC</th>
+                            <th>Lend Date</th>
+                            <th>Return Date</th>
+                            <th>Deskripsi</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        <tr class="empty-row">
+                            <td colspan="9">Belum ada barang</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===== LOGS PAGE ===== -->
+        <div id="logsPage" class="page-section hidden">
+            <div class="header-bar">
+                <h1><i class="fas fa-clipboard-list" style="color:#1a2639;"></i> Log Rusak & Pergantian</h1>
+                <button class="btn btn-primary" id="showAddLogBtn">
+                    <i class="fas fa-plus"></i> Tambah Log
+                </button>
+            </div>
+
+            <!-- Form Log -->
+            <div class="card" id="addLogCard" style="display:none;">
+                <form id="logForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-cubes"></i> Jenis Barang</label>
+                            <select id="logCategoryFilter">
+                                <option value="all">Semua Jenis</option>
+                                <option value="Laptop">Laptop</option>
+                                <option value="Monitor">Monitor</option>
+                                <option value="Printer">Printer</option>
+                                <option value="Keyboard & Mouse">Keyboard & Mouse</option>
+                                <option value="other">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-box"></i> Barang</label>
+                            <select id="logItemSelect">
+                                <option value="">-- pilih jenis dahulu --</option>
+                            </select>
+                            <div class="manual-input-wrapper-v3">
+                                <input type="text" id="logManualItemV3" placeholder="Masukkan nama barang..." />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-clipboard-list"></i> Tipe Log</label>
+                            <select id="logType">
+                                <option value="rusak">🚨 Rusak</option>
+                                <option value="ganti">🔄 Pergantian</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-search"></i> Root Cause</label>
+                            <select id="logRoot">
+                                <option value="Hardware failure">Hardware failure</option>
+                                <option value="Software error">Software error</option>
+                                <option value="User mistake">User mistake</option>
+                                <option value="Other">➕ Other</option>
+                            </select>
+                            <div class="manual-input-wrapper-v3">
+                                <input type="text" id="logManualRootV3" placeholder="Masukkan root cause..." />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> Tanggal</label>
+                            <input type="date" id="logDate" />
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn-submit">
+                                <i class="fas fa-plus-circle"></i> Tambah
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Filter Log -->
+            <div class="filter-bar">
+                <input type="text" id="searchLog" placeholder="🔍 Cari log..." />
+                <select id="filterLogType">
+                    <option value="all">Semua tipe</option>
+                    <option value="rusak">Rusak</option>
+                    <option value="ganti">Pergantian</option>
+                </select>
+                <button class="btn btn-outline" id="resetFilterLog">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button class="btn btn-outline" id="exportPdfBtn">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Barang</th>
+                            <th>Tipe</th>
+                            <th>Root Cause</th>
+                            <th>Tanggal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <tr class="empty-row">
+                            <td colspan="5">Belum ada log</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===== IMPORT PAGE ===== -->
+        <div id="importPage" class="page-section hidden">
+            <div class="header-bar">
+                <h1><i class="fas fa-file-import" style="color:#059669;"></i> Import Excel</h1>
+                <button class="btn btn-outline" id="backToInventoryBtn">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="form-grid" style="margin-bottom:1.5rem;">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><i class="fas fa-download"></i> Download Template Excel</label>
+                        <button class="btn btn-warning" id="downloadTemplateBtn" style="width:100%; justify-content:center; height:48px;">
+                            <i class="fas fa-file-excel"></i> Download Template
+                        </button>
+                        <p style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">
+                            Template berisi kolom: Nama Barang, Serial Number, Jenis, User, PIC, Lend Date, Return Date, Description
+                        </p>
+                    </div>
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drag & drop file Excel di sini</h3>
+                    <p>atau klik untuk memilih file (.xlsx, .xls)</p>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" />
+                </div>
+
+                <div id="importPreview" style="display:none; margin-top:1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+                        <h3 style="font-size:1rem; color:#0f172a;">
+                            <i class="fas fa-eye"></i> Preview Data
+                            <span class="badge" id="previewCount">0</span> baris
+                        </h3>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-outline" id="cancelImportBtn">
+                                <i class="fas fa-times"></i> Batal
+                            </button>
+                            <button class="btn btn-success" id="confirmImportBtn">
+                                <i class="fas fa-check"></i> Import Semua
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container import-preview">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Serial</th>
+                                    <th>Jenis</th>
+                                    <th>User</th>
+                                    <th>PIC</th>
+                                    <th>Lend Date</th>
+                                    <th>Return Date</th>
+                                    <th>Deskripsi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  FIREBASE CONFIG
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtZe_Zo4EYD3QUe2aIveHnawRb3GXsVJM",
+            authDomain: "panduan-genetek.firebaseapp.com",
+            projectId: "panduan-genetek",
+            storageBucket: "panduan-genetek.firebasestorage.app",
+            messagingSenderId: "654454090409",
+            appId: "1:654454090409:web:d1c4bc92b9be50218c57b8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ============================================================
+        //  GLOBAL STATE
+        // ============================================================
+        let currentUser = null;
+        let _items = [];
+        let _logs = [];
+        let _activeCategory = 'all';
+        let importedData = [];
+
+        // ============================================================
+        //  DOM REFERENCES
+        // ============================================================
+        const inventoryPage = document.getElementById('inventoryPage');
+        const logsPage = document.getElementById('logsPage');
+        const importPage = document.getElementById('importPage');
+        const sidebarLinks = document.querySelectorAll('.sidebar-menu a');
+
+        const inventoryBody = document.getElementById('inventoryTableBody');
+        const itemForm = document.getElementById('itemForm');
+        const itemName = document.getElementById('itemName');
+        const itemSerial = document.getElementById('itemSerial');
+        const itemType = document.getElementById('itemType');
+        const manualTypeV3 = document.getElementById('manualTypeV3');
+        const itemUser = document.getElementById('itemUser');
+        const itemPic = document.getElementById('itemPic');
+        const itemLendDate = document.getElementById('itemLendDate');
+        const itemReturnDate = document.getElementById('itemReturnDate');
+        const itemDescription = document.getElementById('itemDescription');
+        const addItemCard = document.getElementById('addItemCard');
+        const showAddItemBtn = document.getElementById('showAddItemBtn');
+        const searchInv = document.getElementById('searchInventory');
+        const sortInv = document.getElementById('sortInventory');
+        const resetFilterInv = document.getElementById('resetFilterInv');
+        const categoryFilter = document.getElementById('categoryFilter');
+
+        const logTableBody = document.getElementById('logTableBody');
+        const logForm = document.getElementById('logForm');
+        const logItemSelect = document.getElementById('logItemSelect');
+        const logCategoryFilter = document.getElementById('logCategoryFilter');
+        const logManualItemV3 = document.getElementById('logManualItemV3');
+        const logType = document.getElementById('logType');
+        const logRoot = document.getElementById('logRoot');
+        const logManualRootV3 = document.getElementById('logManualRootV3');
+        const logDate = document.getElementById('logDate');
+        const showAddLogBtn = document.getElementById('showAddLogBtn');
+        const addLogCard = document.getElementById('addLogCard');
+        const searchLog = document.getElementById('searchLog');
+        const filterLogType = document.getElementById('filterLogType');
+        const resetFilterLog = document.getElementById('resetFilterLog');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const importPreview = document.getElementById('importPreview');
+        const previewTableBody = document.getElementById('previewTableBody');
+        const previewCount = document.getElementById('previewCount');
+        const confirmImportBtn = document.getElementById('confirmImportBtn');
+        const cancelImportBtn = document.getElementById('cancelImportBtn');
+        const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+        const goToImportBtn = document.getElementById('goToImportBtn');
+        const backToInventoryBtn = document.getElementById('backToInventoryBtn');
+
+        // ============================================================
+        //  AUTH STATE
+        // ============================================================
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                currentUser = user;
+
+                // Ambil data dari localStorage atau Firestore
+                const savedUser = localStorage.getItem('itUser');
+                let userData = {};
+                if (savedUser) {
                     try {
-                        await removeItem(idx);
-                        renderInventory();
-                        populateLogSelect();
-                    } catch (error) {
-                        alert('Gagal menghapus: ' + error.message);
-                    }
+                        userData = JSON.parse(savedUser);
+                    } catch (e) {}
                 }
+
+                // Update UI
+                const displayName = userData.displayName || user.displayName || user.email?.split('@')[0] || 'User';
+                document.getElementById('userNameDisplay').textContent = displayName;
+                document.getElementById('userEmailDisplay').textContent = user.email || '';
+                document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
+
+                // Load data
+                loadAllData();
+            } else {
+                // Redirect ke login
+                localStorage.removeItem('itUser');
+                window.location.href = 'login.html';
+            }
+        });
+
+        // ============================================================
+        //  LOGOUT
+        // ============================================================
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            auth.signOut().then(() => {
+                localStorage.removeItem('itUser');
+                window.location.href = 'login.html';
             });
         });
 
-        tbody.querySelectorAll('.btn-add-log').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemName = this.dataset.itemName;
-                const itemType = this.dataset.itemType;
-                navigateTo('logs');
-                document.getElementById('logCategoryFilter').value = itemType;
+        // ============================================================
+        //  FIRESTORE HELPERS
+        // ============================================================
+        const COLLECTION_ITEMS = 'itItems';
+        const COLLECTION_LOGS = 'itLogs';
+
+        async function loadAllData() {
+            if (!currentUser) return;
+            try {
+                await Promise.all([
+                    loadItemsFromFirestore(),
+                    loadLogsFromFirestore()
+                ]);
+                renderInventory();
+                renderLogs();
                 populateLogSelect();
-                setTimeout(() => {
-                    const select = document.getElementById('logItemSelect');
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].value === itemName) {
-                            select.value = itemName;
-                            toggleLogItemManualV3();
-                            break;
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert('Gagal memuat data. Silakan refresh halaman.');
+            }
+        }
+
+        // ----- ITEMS -----
+        async function loadItemsFromFirestore() {
+            try {
+                const snapshot = await db.collection(COLLECTION_ITEMS)
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                const items = [];
+                snapshot.forEach(doc => {
+                    items.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                _items = items;
+                return items;
+            } catch (error) {
+                console.error('Error loading items:', error);
+                _items = [];
+                return [];
+            }
+        }
+
+        async function saveItemToFirestore(item) {
+            if (!currentUser) throw new Error('User not authenticated');
+            try {
+                const docRef = await db.collection(COLLECTION_ITEMS).add({
+                    ...item,
+                    userId: currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                return { id: docRef.id, ...item };
+            } catch (error) {
+                console.error('Error saving item:', error);
+                throw error;
+            }
+        }
+
+        async function deleteItemFromFirestore(itemId) {
+            if (!currentUser) throw new Error('User not authenticated');
+            try {
+                await db.collection(COLLECTION_ITEMS).doc(itemId).delete();
+            } catch (error) {
+                console.error('Error deleting item:', error);
+                throw error;
+            }
+        }
+
+        // ----- LOGS -----
+        async function loadLogsFromFirestore() {
+            try {
+                const snapshot = await db.collection(COLLECTION_LOGS)
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                const logs = [];
+                snapshot.forEach(doc => {
+                    logs.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                _logs = logs;
+                return logs;
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                _logs = [];
+                return [];
+            }
+        }
+
+        async function saveLogToFirestore(log) {
+            if (!currentUser) throw new Error('User not authenticated');
+            try {
+                const docRef = await db.collection(COLLECTION_LOGS).add({
+                    ...log,
+                    userId: currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                return { id: docRef.id, ...log };
+            } catch (error) {
+                console.error('Error saving log:', error);
+                throw error;
+            }
+        }
+
+        async function deleteLogFromFirestore(logId) {
+            if (!currentUser) throw new Error('User not authenticated');
+            try {
+                await db.collection(COLLECTION_LOGS).doc(logId).delete();
+            } catch (error) {
+                console.error('Error deleting log:', error);
+                throw error;
+            }
+        }
+
+        // ============================================================
+        //  DATA OPERATIONS
+        // ============================================================
+        function getItems() { return _items; }
+
+        function getLogs() { return _logs; }
+
+        async function addItem(item) {
+            const saved = await saveItemToFirestore(item);
+            _items.unshift(saved);
+            return saved;
+        }
+
+        async function removeItem(index) {
+            const items = getItems();
+            if (index >= 0 && index < items.length) {
+                const item = items[index];
+                if (item.id) {
+                    await deleteItemFromFirestore(item.id);
+                }
+                items.splice(index, 1);
+                _items = items;
+            }
+        }
+
+        async function addLog(log) {
+            const saved = await saveLogToFirestore(log);
+            _logs.unshift(saved);
+            return saved;
+        }
+
+        async function removeLog(index) {
+            const logs = getLogs();
+            if (index >= 0 && index < logs.length) {
+                const log = logs[index];
+                if (log.id) {
+                    await deleteLogFromFirestore(log.id);
+                }
+                logs.splice(index, 1);
+                _logs = logs;
+            }
+        }
+
+        // ============================================================
+        //  RENDER FUNCTIONS
+        // ============================================================
+        function renderInventory() {
+            let items = getItems();
+            const search = searchInv.value.toLowerCase();
+            const sort = sortInv.value;
+
+            if (_activeCategory !== 'all') {
+                items = items.filter(it => it.type === _activeCategory);
+            }
+
+            if (search) {
+                items = items.filter(it =>
+                    it.name.toLowerCase().includes(search) ||
+                    (it.serial && it.serial.toLowerCase().includes(search)) ||
+                    it.type.toLowerCase().includes(search) ||
+                    it.user.toLowerCase().includes(search) ||
+                    it.pic.toLowerCase().includes(search) ||
+                    (it.description && it.description.toLowerCase().includes(search))
+                );
+            }
+
+            if (sort === 'name') items.sort((a, b) => a.name.localeCompare(b.name));
+            else if (sort === 'type') items.sort((a, b) => a.type.localeCompare(b.type));
+            else if (sort === 'serial') items.sort((a, b) => (a.serial || '').localeCompare(b.serial || ''));
+            else if (sort === 'user') items.sort((a, b) => a.user.localeCompare(b.user));
+            else if (sort === 'lendDate') items.sort((a, b) => (a.lendDate || '').localeCompare(b.lendDate || ''));
+            else if (sort === 'returnDate') items.sort((a, b) => (a.returnDate || '').localeCompare(b.returnDate || ''));
+
+            if (!items.length) {
+                inventoryBody.innerHTML =
+                    `<tr class="empty-row"><td colspan="9">Tidak ada barang${_activeCategory !== 'all' ? ' di kategori ' + _activeCategory : ''}</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            items.forEach((item, idx) => {
+                const realIndex = getItems().indexOf(item);
+                html += `<tr class="fade-row">
+                    <td><strong>${escapeHtml(item.name)}</strong></td>
+                    <td><span class="badge">${escapeHtml(item.serial || '-')}</span></td>
+                    <td><span class="badge">${escapeHtml(item.type)}</span></td>
+                    <td>${escapeHtml(item.user)}</td>
+                    <td>${escapeHtml(item.pic)}</td>
+                    <td>${formatDate(item.lendDate)}</td>
+                    <td>${formatDate(item.returnDate)}</td>
+                    <td><span class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</span></td>
+                    <td>
+                        <div class="action-buttons-cell">
+                            <button class="btn btn-danger btn-add-log" data-item-name="${escapeHtml(item.name)}" data-item-type="${escapeHtml(item.type)}" title="Tambah ke Log Kerusakan"><i class="fas fa-clipboard-plus"></i></button>
+                            <button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-inv-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            inventoryBody.innerHTML = html;
+
+            // Delete button
+            inventoryBody.querySelectorAll('[data-inv-idx]').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const idx = parseInt(this.dataset.invIdx, 10);
+                    if (confirm('Hapus barang ini?')) {
+                        try {
+                            await removeItem(idx);
+                            renderInventory();
+                            populateLogSelect();
+                        } catch (error) {
+                            alert('Gagal menghapus: ' + error.message);
                         }
                     }
-                    const card = document.getElementById('addLogCard');
-                    if (card.style.display === 'none' || !card.style.display) {
-                        toggleCard(card);
-                    }
-                    setDefaultDates();
-                    document.getElementById('logForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
-            });
-        });
-    }
-
-    function renderLogs() {
-        let logs = getLogs();
-        const search = document.getElementById('searchLog').value.toLowerCase();
-        const filterType = document.getElementById('filterLogType').value;
-        
-        if (search) logs = logs.filter(l => l.item.toLowerCase().includes(search) || l.rootCause.toLowerCase().includes(search));
-        if (filterType !== 'all') logs = logs.filter(l => l.type === filterType);
-
-        const tbody = document.getElementById('logTableBody');
-        if (!logs.length) { 
-            tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Belum ada log</td></tr>`; 
-            return; 
-        }
-        
-        let html = '';
-        logs.forEach((log, idx) => {
-            const realIndex = getLogs().indexOf(log);
-            const typeLabel = log.type === 'rusak' ? 'Rusak' : 'Pergantian';
-            const cls = log.type === 'rusak' ? 'rusak' : 'ganti';
-            html += `<tr class="fade-row">
-                <td><strong>${escapeHtml(log.item)}</strong></td>
-                <td><span class="badge ${cls}">${typeLabel}</span></td>
-                <td>${escapeHtml(log.rootCause)}</td>
-                <td>${escapeHtml(log.date)}</td>
-                <td><button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-log-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button></td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-        
-        tbody.querySelectorAll('[data-log-idx]').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const idx = parseInt(this.dataset.logIdx, 10);
-                if (confirm('Hapus log ini?')) {
-                    try {
-                        await removeLog(idx);
-                        renderLogs();
-                    } catch (error) {
-                        alert('Gagal menghapus: ' + error.message);
-                    }
-                }
-            });
-        });
-    }
-
-    // ==================== HELPERS ====================
-    function escapeHtml(text) {
-        if (!text) return '';
-        return String(text).replace(/[&<>"']/g, function(m) {
-            if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;';
-            if (m === '"') return '&quot;'; return '&#039;';
-        });
-    }
-
-    function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        try {
-            const d = new Date(dateStr + 'T00:00:00');
-            if (isNaN(d.getTime())) return dateStr;
-            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        } catch { return dateStr; }
-    }
-
-    function navigateTo(page) {
-        document.querySelectorAll('.sidebar-menu a').forEach(l => l.classList.remove('active'));
-        document.querySelector(`.sidebar-menu a[data-page="${page}"]`)?.classList.add('active');
-        
-        document.getElementById('inventoryPage').classList.add('hidden');
-        document.getElementById('logsPage').classList.add('hidden');
-        document.getElementById('importPage').classList.add('hidden');
-        
-        if (page === 'inventory') {
-            document.getElementById('inventoryPage').classList.remove('hidden');
-            renderInventory();
-        } else if (page === 'logs') {
-            document.getElementById('logsPage').classList.remove('hidden');
-            renderLogs();
-            populateLogSelect();
-        } else if (page === 'import') {
-            document.getElementById('importPage').classList.remove('hidden');
-        }
-    }
-
-    function toggleCard(card) {
-        if (card.style.display === 'none' || !card.style.display) {
-            card.style.display = 'block';
-            card.classList.remove('card-slide');
-            void card.offsetWidth;
-            card.classList.add('card-slide');
-        } else {
-            card.classList.remove('card-slide');
-            setTimeout(() => { card.style.display = 'none'; }, 300);
-        }
-    }
-
-    function toggleManualInputV3(inputElement, show) {
-        if (show) {
-            inputElement.classList.add('visible');
-        } else {
-            inputElement.classList.remove('visible');
-            inputElement.value = '';
-        }
-    }
-
-    function toggleLogItemManualV3() {
-        const show = document.getElementById('logItemSelect').value === 'other';
-        toggleManualInputV3(document.getElementById('logManualItemV3'), show);
-    }
-
-    function toggleLogRootManualV3() {
-        const show = document.getElementById('logRoot').value === 'Other';
-        toggleManualInputV3(document.getElementById('logManualRootV3'), show);
-    }
-
-    function toggleItemTypeManualV3() {
-        const show = document.getElementById('itemType').value === 'other';
-        toggleManualInputV3(document.getElementById('manualTypeV3'), show);
-    }
-
-    function populateLogSelect() {
-        const items = getItems();
-        const selectedCategory = document.getElementById('logCategoryFilter').value;
-        
-        let filteredItems = items;
-        if (selectedCategory !== 'all') {
-            filteredItems = items.filter(it => it.type === selectedCategory);
-        }
-
-        const select = document.getElementById('logItemSelect');
-        select.innerHTML = '<option value="">-- pilih barang --</option>';
-        if (filteredItems.length === 0) {
-            select.innerHTML += '<option value="" disabled>-- tidak ada barang di kategori ini --</option>';
-        } else {
-            filteredItems.forEach(it => {
-                const opt = document.createElement('option');
-                opt.value = it.name;
-                opt.textContent = `${it.name} ${it.serial ? '(' + it.serial + ')' : ''}`;
-                select.appendChild(opt);
-            });
-        }
-        const otherOpt = document.createElement('option');
-        otherOpt.value = 'other';
-        otherOpt.textContent = '➕ Other (manual)';
-        select.appendChild(otherOpt);
-    }
-
-    function setDefaultDates() {
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const d = String(today.getDate()).padStart(2, '0');
-        const dateStr = `${y}-${m}-${d}`;
-        document.getElementById('logDate').value = dateStr;
-        document.getElementById('itemLendDate').value = dateStr;
-        const returnDate = new Date(today);
-        returnDate.setDate(returnDate.getDate() + 7);
-        const ry = returnDate.getFullYear();
-        const rm = String(returnDate.getMonth() + 1).padStart(2, '0');
-        const rd = String(returnDate.getDate()).padStart(2, '0');
-        document.getElementById('itemReturnDate').value = `${ry}-${rm}-${rd}`;
-    }
-
-    // ==================== FORM SUBMIT ====================
-    document.getElementById('itemForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        let type = document.getElementById('itemType').value;
-        if (type === 'other') { 
-            type = document.getElementById('manualTypeV3').value.trim(); 
-            if (!type) { alert('Isi jenis barang manual'); return; } 
-        }
-        const name = document.getElementById('itemName').value.trim(); 
-        if (!name) { alert('Nama barang wajib'); return; }
-        
-        const item = {
-            name,
-            serial: document.getElementById('itemSerial').value.trim() || '',
-            type,
-            user: document.getElementById('itemUser').value.trim() || '-',
-            pic: document.getElementById('itemPic').value.trim() || '-',
-            lendDate: document.getElementById('itemLendDate').value || '',
-            returnDate: document.getElementById('itemReturnDate').value || '',
-            description: document.getElementById('itemDescription').value.trim() || ''
-        };
-
-        try {
-            await addItem(item);
-            renderInventory();
-            populateLogSelect();
-            document.getElementById('itemForm').reset();
-            document.getElementById('addItemCard').style.display = 'none';
-            toggleItemTypeManualV3();
-            setDefaultDates();
-        } catch (error) {
-            alert('Gagal menyimpan: ' + error.message);
-        }
-    });
-
-    document.getElementById('logForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        let item = document.getElementById('logItemSelect').value;
-        if (item === 'other') { 
-            item = document.getElementById('logManualItemV3').value.trim(); 
-            if (!item) { alert('Isi nama barang manual'); return; } 
-        } else if (!item) { alert('Pilih barang'); return; }
-        
-        let rootCause = document.getElementById('logRoot').value;
-        if (rootCause === 'Other') { 
-            rootCause = document.getElementById('logManualRootV3').value.trim(); 
-            if (!rootCause) { alert('Isi root cause manual'); return; } 
-        }
-        
-        const log = {
-            item,
-            type: document.getElementById('logType').value,
-            rootCause,
-            date: document.getElementById('logDate').value || new Date().toISOString().slice(0,10)
-        };
-
-        try {
-            await addLog(log);
-            renderLogs();
-            document.getElementById('logForm').reset();
-            document.getElementById('addLogCard').style.display = 'none';
-            toggleLogItemManualV3();
-            toggleLogRootManualV3();
-            setDefaultDates();
-            populateLogSelect();
-        } catch (error) {
-            alert('Gagal menyimpan log: ' + error.message);
-        }
-    });
-
-    // ==================== EVENT LISTENERS ====================
-    document.querySelectorAll('.sidebar-menu a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            navigateTo(this.dataset.page);
-        });
-    });
-
-    document.getElementById('categoryFilter').addEventListener('click', function(e) {
-        const chip = e.target.closest('.category-chip');
-        if (!chip) return;
-        
-        this.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        window._activeCategory = chip.dataset.category;
-        renderInventory();
-    });
-
-    document.getElementById('showAddItemBtn').addEventListener('click', () => toggleCard(document.getElementById('addItemCard')));
-    document.getElementById('showAddLogBtn').addEventListener('click', () => toggleCard(document.getElementById('addLogCard')));
-    document.getElementById('goToImportBtn').addEventListener('click', () => navigateTo('import'));
-    document.getElementById('backToInventoryBtn').addEventListener('click', () => navigateTo('inventory'));
-
-    document.getElementById('itemType').addEventListener('change', toggleItemTypeManualV3);
-    document.getElementById('logItemSelect').addEventListener('change', toggleLogItemManualV3);
-    document.getElementById('logRoot').addEventListener('change', toggleLogRootManualV3);
-    document.getElementById('logCategoryFilter').addEventListener('change', populateLogSelect);
-
-    document.getElementById('searchInventory').addEventListener('input', renderInventory);
-    document.getElementById('sortInventory').addEventListener('change', renderInventory);
-    document.getElementById('resetFilterInv').addEventListener('click', function() { 
-        document.getElementById('searchInventory').value = ''; 
-        document.getElementById('sortInventory').value = 'name'; 
-        document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
-        document.querySelector('.category-chip[data-category="all"]').classList.add('active');
-        window._activeCategory = 'all';
-        renderInventory(); 
-    });
-
-    document.getElementById('searchLog').addEventListener('input', renderLogs);
-    document.getElementById('filterLogType').addEventListener('change', renderLogs);
-    document.getElementById('resetFilterLog').addEventListener('click', function() { 
-        document.getElementById('searchLog').value = ''; 
-        document.getElementById('filterLogType').value = 'all'; 
-        renderLogs(); 
-    });
-
-    // ==================== EXPORT PDF ====================
-    document.getElementById('exportPdfBtn').addEventListener('click', function() {
-        const logs = getLogs();
-        if (!logs.length) { alert('Tidak ada log'); return; }
-        const win = window.open('', '_blank', 'width=800,height=600');
-        if (!win) { alert('Izinkan pop-up'); return; }
-        let rows = '';
-        logs.forEach(l => {
-            rows += `<tr><td>${escapeHtml(l.item)}</td><td>${l.type === 'rusak' ? 'Rusak' : 'Pergantian'}</td><td>${escapeHtml(l.rootCause)}</td><td>${escapeHtml(l.date)}</td></tr>`;
-        });
-        win.document.write(`<html><head><title>Log IT</title><style>body{font-family:Inter,sans-serif;padding:2rem;}table{width:100%;border-collapse:collapse;}th{background:#f1f5f9;padding:10px;}td{padding:8px;border-bottom:1px solid #e2e8f0;}</style></head><body><h1>Log Kerusakan & Pergantian</h1><table><thead><tr><th>Barang</th><th>Tipe</th><th>Root Cause</th><th>Tanggal</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
-        win.document.close();
-        win.focus();
-        win.print();
-    });
-
-    // ==================== IMPORT EXCEL ====================
-    const uploadZone = document.getElementById('uploadZone');
-    const fileInput = document.getElementById('fileInput');
-    const importPreview = document.getElementById('importPreview');
-    const previewTableBody = document.getElementById('previewTableBody');
-    const previewCount = document.getElementById('previewCount');
-    const confirmImportBtn = document.getElementById('confirmImportBtn');
-    const cancelImportBtn = document.getElementById('cancelImportBtn');
-    const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
-    let importedData = [];
-
-    uploadZone.addEventListener('click', () => fileInput.click());
-
-    uploadZone.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.classList.add('dragover');
-    });
-
-    uploadZone.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-    });
-
-    uploadZone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-        if (e.dataTransfer.files.length) {
-            handleFile(e.dataTransfer.files[0]);
-        }
-    });
-
-    fileInput.addEventListener('change', function(e) {
-        if (this.files.length) {
-            handleFile(this.files[0]);
-        }
-    });
-
-    function handleFile(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                
-                if (!jsonData || jsonData.length === 0) {
-                    alert('File Excel kosong atau tidak memiliki data.');
-                    return;
-                }
-
-                const columns = Object.keys(jsonData[0]);
-                const headerMap = {};
-                columns.forEach(col => {
-                    const lower = col.toLowerCase().trim();
-                    if (lower.includes('nama') || lower.includes('barang')) headerMap['name'] = col;
-                    else if (lower.includes('serial')) headerMap['serial'] = col;
-                    else if (lower.includes('jenis')) headerMap['type'] = col;
-                    else if (lower === 'user') headerMap['user'] = col;
-                    else if (lower.includes('pic') || lower.includes('penanggung')) headerMap['pic'] = col;
-                    else if (lower.includes('lend') || lower.includes('pinjam')) headerMap['lendDate'] = col;
-                    else if (lower.includes('return') || lower.includes('kembali')) headerMap['returnDate'] = col;
-                    else if (lower.includes('deskripsi') || lower.includes('description')) headerMap['description'] = col;
                 });
+            });
 
-                importedData = jsonData.map(row => {
-                    const item = {
-                        name: row[headerMap['name']] || row['Nama Barang'] || '',
-                        serial: row[headerMap['serial']] || row['Serial Number'] || '',
-                        type: row[headerMap['type']] || row['Jenis'] || 'Laptop',
-                        user: row[headerMap['user']] || row['User'] || '-',
-                        pic: row[headerMap['pic']] || row['PIC'] || '-',
-                        lendDate: row[headerMap['lendDate']] || row['Lend Date'] || '',
-                        returnDate: row[headerMap['returnDate']] || row['Return Date'] || '',
-                        description: row[headerMap['description']] || row['Description'] || ''
-                    };
-                    if (!item.serial) item.serial = '';
-                    if (!item.description) item.description = '';
-                    return item;
-                }).filter(item => item.name && item.name.trim() !== '');
+            // Add to log button
+            inventoryBody.querySelectorAll('.btn-add-log').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const itemName = this.dataset.itemName;
+                    const itemType = this.dataset.itemType;
+                    navigateTo('logs');
+                    logCategoryFilter.value = itemType;
+                    populateLogSelect();
+                    setTimeout(() => {
+                        const select = logItemSelect;
+                        for (let i = 0; i < select.options.length; i++) {
+                            if (select.options[i].value === itemName) {
+                                select.value = itemName;
+                                toggleLogItemManualV3();
+                                break;
+                            }
+                        }
+                        if (addLogCard.style.display === 'none' || !addLogCard.style.display) {
+                            toggleCard(addLogCard);
+                        }
+                        setDefaultDates();
+                        logForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                });
+            });
+        }
 
-                if (importedData.length === 0) {
-                    alert('Tidak ada data valid yang ditemukan. Pastikan kolom "Nama Barang" terisi.');
-                    return;
-                }
+        function renderLogs() {
+            let logs = getLogs();
+            const search = searchLog.value.toLowerCase();
+            const filterType = filterLogType.value;
 
-                showPreview(importedData);
-            } catch (err) {
-                alert('Gagal membaca file: ' + err.message);
-                console.error(err);
+            if (search) logs = logs.filter(l => l.item.toLowerCase().includes(search) || l.rootCause.toLowerCase().includes(
+                search));
+            if (filterType !== 'all') logs = logs.filter(l => l.type === filterType);
+
+            if (!logs.length) {
+                logTableBody.innerHTML = `<tr class="empty-row"><td colspan="5">Belum ada log</td></tr>`;
+                return;
             }
-        };
-        reader.readAsArrayBuffer(file);
-    }
 
-    function showPreview(data) {
-        previewCount.textContent = data.length;
-        let html = '';
-        data.slice(0, 100).forEach((item, idx) => {
-            html += `<tr>
-                <td><strong>${escapeHtml(item.name)}</strong></td>
-                <td>${escapeHtml(item.serial || '-')}</td>
-                <td><span class="badge">${escapeHtml(item.type)}</span></td>
-                <td>${escapeHtml(item.user)}</td>
-                <td>${escapeHtml(item.pic)}</td>
-                <td>${formatDate(item.lendDate)}</td>
-                <td>${formatDate(item.returnDate)}</td>
-                <td class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</td>
-            </tr>`;
+            let html = '';
+            logs.forEach((log, idx) => {
+                const realIndex = getLogs().indexOf(log);
+                const typeLabel = log.type === 'rusak' ? 'Rusak' : 'Pergantian';
+                const cls = log.type === 'rusak' ? 'rusak' : 'ganti';
+                html += `<tr class="fade-row">
+                    <td><strong>${escapeHtml(log.item)}</strong></td>
+                    <td><span class="badge ${cls}">${typeLabel}</span></td>
+                    <td>${escapeHtml(log.rootCause)}</td>
+                    <td>${escapeHtml(log.date)}</td>
+                    <td><button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-log-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button></td>
+                </tr>`;
+            });
+            logTableBody.innerHTML = html;
+
+            logTableBody.querySelectorAll('[data-log-idx]').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const idx = parseInt(this.dataset.logIdx, 10);
+                    if (confirm('Hapus log ini?')) {
+                        try {
+                            await removeLog(idx);
+                            renderLogs();
+                        } catch (error) {
+                            alert('Gagal menghapus: ' + error.message);
+                        }
+                    }
+                });
+            });
+        }
+
+        // ============================================================
+        //  HELPER FUNCTIONS
+        // ============================================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text).replace(/[&<>"']/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return '&#039;';
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            try {
+                const d = new Date(dateStr + 'T00:00:00');
+                if (isNaN(d.getTime())) return dateStr;
+                return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            } catch { return dateStr; }
+        }
+
+        function navigateTo(page) {
+            sidebarLinks.forEach(l => l.classList.remove('active'));
+            document.querySelector(`.sidebar-menu a[data-page="${page}"]`)?.classList.add('active');
+
+            inventoryPage.classList.add('hidden');
+            logsPage.classList.add('hidden');
+            importPage.classList.add('hidden');
+
+            if (page === 'inventory') {
+                inventoryPage.classList.remove('hidden');
+                renderInventory();
+            } else if (page === 'logs') {
+                logsPage.classList.remove('hidden');
+                renderLogs();
+                populateLogSelect();
+            } else if (page === 'import') {
+                importPage.classList.remove('hidden');
+            }
+        }
+
+        function toggleCard(card) {
+            if (card.style.display === 'none' || !card.style.display) {
+                card.style.display = 'block';
+                card.classList.remove('card-slide');
+                void card.offsetWidth;
+                card.classList.add('card-slide');
+            } else {
+                card.classList.remove('card-slide');
+                setTimeout(() => { card.style.display = 'none'; }, 300);
+            }
+        }
+
+        function toggleManualInputV3(inputElement, show) {
+            if (show) {
+                inputElement.classList.add('visible');
+            } else {
+                inputElement.classList.remove('visible');
+                inputElement.value = '';
+            }
+        }
+
+        function toggleLogItemManualV3() {
+            const show = logItemSelect.value === 'other';
+            toggleManualInputV3(logManualItemV3, show);
+        }
+
+        function toggleLogRootManualV3() {
+            const show = logRoot.value === 'Other';
+            toggleManualInputV3(logManualRootV3, show);
+        }
+
+        function toggleItemTypeManualV3() {
+            const show = itemType.value === 'other';
+            toggleManualInputV3(manualTypeV3, show);
+        }
+
+        function populateLogSelect() {
+            const items = getItems();
+            const selectedCategory = logCategoryFilter.value;
+
+            let filteredItems = items;
+            if (selectedCategory !== 'all') {
+                filteredItems = items.filter(it => it.type === selectedCategory);
+            }
+
+            logItemSelect.innerHTML = '<option value="">-- pilih barang --</option>';
+            if (filteredItems.length === 0) {
+                logItemSelect.innerHTML += '<option value="" disabled>-- tidak ada barang di kategori ini --</option>';
+            } else {
+                filteredItems.forEach(it => {
+                    const opt = document.createElement('option');
+                    opt.value = it.name;
+                    opt.textContent = `${it.name} ${it.serial ? '(' + it.serial + ')' : ''}`;
+                    logItemSelect.appendChild(opt);
+                });
+            }
+            const otherOpt = document.createElement('option');
+            otherOpt.value = 'other';
+            otherOpt.textContent = '➕ Other (manual)';
+            logItemSelect.appendChild(otherOpt);
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+            logDate.value = dateStr;
+            itemLendDate.value = dateStr;
+            const returnDate = new Date(today);
+            returnDate.setDate(returnDate.getDate() + 7);
+            const ry = returnDate.getFullYear();
+            const rm = String(returnDate.getMonth() + 1).padStart(2, '0');
+            const rd = String(returnDate.getDate()).padStart(2, '0');
+            itemReturnDate.value = `${ry}-${rm}-${rd}`;
+        }
+
+        // ============================================================
+        //  EVENT LISTENERS
+        // ============================================================
+
+        // ---- Navigation ----
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                navigateTo(this.dataset.page);
+            });
         });
-        if (data.length > 100) {
-            html += `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">... dan ${data.length - 100} baris lainnya</td></tr>`;
-        }
-        previewTableBody.innerHTML = html;
-        importPreview.style.display = 'block';
-    }
 
-    confirmImportBtn.addEventListener('click', async function() {
-        if (importedData.length === 0) return;
-        const items = getItems();
-        let added = 0;
-        for (const itemData of importedData) {
-            const exists = items.some(ex => ex.name === itemData.name && ex.serial === itemData.serial);
-            if (!exists && itemData.name.trim() !== '') {
-                const item = {
-                    name: itemData.name.trim(),
-                    serial: itemData.serial || '',
-                    type: itemData.type || 'Laptop',
-                    user: itemData.user || '-',
-                    pic: itemData.pic || '-',
-                    lendDate: itemData.lendDate || '',
-                    returnDate: itemData.returnDate || '',
-                    description: itemData.description || ''
-                };
+        goToImportBtn.addEventListener('click', () => navigateTo('import'));
+        backToInventoryBtn.addEventListener('click', () => navigateTo('inventory'));
+
+        // ---- Category Filter ----
+        categoryFilter.addEventListener('click', function(e) {
+            const chip = e.target.closest('.category-chip');
+            if (!chip) return;
+
+            this.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            _activeCategory = chip.dataset.category;
+            renderInventory();
+        });
+
+        // ---- Show/Hide Cards ----
+        showAddItemBtn.addEventListener('click', () => toggleCard(addItemCard));
+        showAddLogBtn.addEventListener('click', () => toggleCard(addLogCard));
+
+        // ---- Item Form ----
+        itemForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            let type = itemType.value;
+            if (type === 'other') {
+                type = manualTypeV3.value.trim();
+                if (!type) { alert('Isi jenis barang manual'); return; }
+            }
+            const name = itemName.value.trim();
+            if (!name) { alert('Nama barang wajib'); return; }
+
+            const item = {
+                name,
+                serial: itemSerial.value.trim() || '',
+                type,
+                user: itemUser.value.trim() || '-',
+                pic: itemPic.value.trim() || '-',
+                lendDate: itemLendDate.value || '',
+                returnDate: itemReturnDate.value || '',
+                description: itemDescription.value.trim() || ''
+            };
+
+            try {
+                await addItem(item);
+                renderInventory();
+                populateLogSelect();
+                this.reset();
+                addItemCard.style.display = 'none';
+                toggleItemTypeManualV3();
+                setDefaultDates();
+            } catch (error) {
+                alert('Gagal menyimpan: ' + error.message);
+            }
+        });
+
+        // ---- Log Form ----
+        logForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            let item = logItemSelect.value;
+            if (item === 'other') {
+                item = logManualItemV3.value.trim();
+                if (!item) { alert('Isi nama barang manual'); return; }
+            } else if (!item) { alert('Pilih barang'); return; }
+
+            let rootCause = logRoot.value;
+            if (rootCause === 'Other') {
+                rootCause = logManualRootV3.value.trim();
+                if (!rootCause) { alert('Isi root cause manual'); return; }
+            }
+
+            const log = {
+                item,
+                type: logType.value,
+                rootCause,
+                date: logDate.value || new Date().toISOString().slice(0, 10)
+            };
+
+            try {
+                await addLog(log);
+                renderLogs();
+                this.reset();
+                addLogCard.style.display = 'none';
+                toggleLogItemManualV3();
+                toggleLogRootManualV3();
+                setDefaultDates();
+                populateLogSelect();
+            } catch (error) {
+                alert('Gagal menyimpan log: ' + error.message);
+            }
+        });
+
+        // ---- Filter & Sort ----
+        searchInv.addEventListener('input', renderInventory);
+        sortInv.addEventListener('change', renderInventory);
+
+        resetFilterInv.addEventListener('click', function() {
+            searchInv.value = '';
+            sortInv.value = 'name';
+            categoryFilter.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            document.querySelector('.category-chip[data-category="all"]').classList.add('active');
+            _activeCategory = 'all';
+            renderInventory();
+        });
+
+        searchLog.addEventListener('input', renderLogs);
+        filterLogType.addEventListener('change', renderLogs);
+
+        resetFilterLog.addEventListener('click', function() {
+            searchLog.value = '';
+            filterLogType.value = 'all';
+            renderLogs();
+        });
+
+        // ---- Select Changes ----
+        itemType.addEventListener('change', toggleItemTypeManualV3);
+        logItemSelect.addEventListener('change', toggleLogItemManualV3);
+        logRoot.addEventListener('change', toggleLogRootManualV3);
+        logCategoryFilter.addEventListener('change', populateLogSelect);
+
+        // ---- Export PDF ----
+        exportPdfBtn.addEventListener('click', function() {
+            const logs = getLogs();
+            if (!logs.length) { alert('Tidak ada log'); return; }
+            const win = window.open('', '_blank', 'width=800,height=600');
+            if (!win) { alert('Izinkan pop-up'); return; }
+            let rows = '';
+            logs.forEach(l => {
+                rows +=
+                    `<tr><td>${escapeHtml(l.item)}</td><td>${l.type === 'rusak' ? 'Rusak' : 'Pergantian'}</td><td>${escapeHtml(l.rootCause)}</td><td>${escapeHtml(l.date)}</td></tr>`;
+            });
+            win.document.write(`<html><head><title>Log IT</title>
+                <style>body{font-family:Inter,sans-serif;padding:2rem;}table{width:100%;border-collapse:collapse;}th{background:#f1f5f9;padding:10px;}td{padding:8px;border-bottom:1px solid #e2e8f0;}</style>
+                </head><body><h1>Log Kerusakan & Pergantian</h1>
+                <table><thead><tr><th>Barang</th><th>Tipe</th><th>Root Cause</th><th>Tanggal</th></tr></thead>
+                <tbody>${rows}</tbody></table></body></html>`);
+            win.document.close();
+            win.focus();
+            win.print();
+        });
+
+        // ---- Import Excel ----
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length) {
+                handleFile(this.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
                 try {
-                    await addItem(item);
-                    added++;
-                } catch (error) {
-                    console.error('Error importing item:', error);
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    if (!jsonData || jsonData.length === 0) {
+                        alert('File Excel kosong atau tidak memiliki data.');
+                        return;
+                    }
+
+                    const columns = Object.keys(jsonData[0]);
+                    const headerMap = {};
+                    columns.forEach(col => {
+                        const lower = col.toLowerCase().trim();
+                        if (lower.includes('nama') || lower.includes('barang')) headerMap['name'] = col;
+                        else if (lower.includes('serial')) headerMap['serial'] = col;
+                        else if (lower.includes('jenis')) headerMap['type'] = col;
+                        else if (lower === 'user') headerMap['user'] = col;
+                        else if (lower.includes('pic') || lower.includes('penanggung')) headerMap['pic'] = col;
+                        else if (lower.includes('lend') || lower.includes('pinjam')) headerMap['lendDate'] = col;
+                        else if (lower.includes('return') || lower.includes('kembali')) headerMap['returnDate'] =
+                        col;
+                        else if (lower.includes('deskripsi') || lower.includes('description')) headerMap[
+                            'description'] = col;
+                    });
+
+                    importedData = jsonData.map(row => {
+                        const item = {
+                            name: row[headerMap['name']] || row['Nama Barang'] || '',
+                            serial: row[headerMap['serial']] || row['Serial Number'] || '',
+                            type: row[headerMap['type']] || row['Jenis'] || 'Laptop',
+                            user: row[headerMap['user']] || row['User'] || '-',
+                            pic: row[headerMap['pic']] || row['PIC'] || '-',
+                            lendDate: row[headerMap['lendDate']] || row['Lend Date'] || '',
+                            returnDate: row[headerMap['returnDate']] || row['Return Date'] || '',
+                            description: row[headerMap['description']] || row['Description'] || ''
+                        };
+                        if (!item.serial) item.serial = '';
+                        if (!item.description) item.description = '';
+                        return item;
+                    }).filter(item => item.name && item.name.trim() !== '');
+
+                    if (importedData.length === 0) {
+                        alert('Tidak ada data valid yang ditemukan. Pastikan kolom "Nama Barang" terisi.');
+                        return;
+                    }
+
+                    showPreview(importedData);
+                } catch (err) {
+                    alert('Gagal membaca file: ' + err.message);
+                    console.error(err);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showPreview(data) {
+            previewCount.textContent = data.length;
+            let html = '';
+            data.slice(0, 100).forEach((item, idx) => {
+                html += `<tr>
+                    <td><strong>${escapeHtml(item.name)}</strong></td>
+                    <td>${escapeHtml(item.serial || '-')}</td>
+                    <td><span class="badge">${escapeHtml(item.type)}</span></td>
+                    <td>${escapeHtml(item.user)}</td>
+                    <td>${escapeHtml(item.pic)}</td>
+                    <td>${formatDate(item.lendDate)}</td>
+                    <td>${formatDate(item.returnDate)}</td>
+                    <td class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</td>
+                </tr>`;
+            });
+            if (data.length > 100) {
+                html +=
+                    `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">... dan ${data.length - 100} baris lainnya</td></tr>`;
+            }
+            previewTableBody.innerHTML = html;
+            importPreview.style.display = 'block';
+        }
+
+        confirmImportBtn.addEventListener('click', async function() {
+            if (importedData.length === 0) return;
+            const items = getItems();
+            let added = 0;
+            for (const itemData of importedData) {
+                const exists = items.some(ex => ex.name === itemData.name && ex.serial === itemData.serial);
+                if (!exists && itemData.name.trim() !== '') {
+                    const item = {
+                        name: itemData.name.trim(),
+                        serial: itemData.serial || '',
+                        type: itemData.type || 'Laptop',
+                        user: itemData.user || '-',
+                        pic: itemData.pic || '-',
+                        lendDate: itemData.lendDate || '',
+                        returnDate: itemData.returnDate || '',
+                        description: itemData.description || ''
+                    };
+                    try {
+                        await addItem(item);
+                        added++;
+                    } catch (error) {
+                        console.error('Error importing item:', error);
+                    }
                 }
             }
-        }
-        renderInventory();
-        populateLogSelect();
-        alert(`Berhasil mengimport ${added} barang baru. ${importedData.length - added} barang skip (duplikat atau tidak valid).`);
-        importPreview.style.display = 'none';
-        importedData = [];
-        fileInput.value = '';
-    });
+            renderInventory();
+            populateLogSelect();
+            alert(`Berhasil mengimport ${added} barang baru. ${importedData.length - added} barang skip (duplikat atau tidak valid).`);
+            importPreview.style.display = 'none';
+            importedData = [];
+            fileInput.value = '';
+        });
 
-    cancelImportBtn.addEventListener('click', function() {
-        importPreview.style.display = 'none';
-        importedData = [];
-        fileInput.value = '';
-    });
+        cancelImportBtn.addEventListener('click', function() {
+            importPreview.style.display = 'none';
+            importedData = [];
+            fileInput.value = '';
+        });
 
-    downloadTemplateBtn.addEventListener('click', function() {
-        const templateData = [
-            ['Nama Barang', 'Serial Number', 'Jenis', 'User', 'PIC', 'Lend Date', 'Return Date', 'Description'],
-            ['Laptop Dell XPS', 'SN-001', 'Laptop', 'Budi', 'Andi', '2025-01-15', '2025-01-22', 'Laptop untuk development'],
-            ['Monitor LG 27"', 'SN-002', 'Monitor', 'Siti', 'Andi', '2025-01-16', '2025-01-23', 'Monitor untuk desain'],
-            ['Keyboard Mechanical', 'SN-003', 'Keyboard & Mouse', 'Joko', 'Budi', '2025-01-17', '2025-01-24', 'Keyboard mechanical blue switch']
-        ];
-        
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(templateData);
-        XLSX.utils.book_append_sheet(wb, ws, 'Template');
-        
-        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'template_inventaris_it.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    });
+        // ---- Download Template ----
+        downloadTemplateBtn.addEventListener('click', function() {
+            const templateData = [
+                ['Nama Barang', 'Serial Number', 'Jenis', 'User', 'PIC', 'Lend Date', 'Return Date',
+                    'Description'
+                ],
+                ['Laptop Dell XPS', 'SN-001', 'Laptop', 'Budi', 'Andi', '2025-01-15', '2025-01-22',
+                    'Laptop untuk development'
+                ],
+                ['Monitor LG 27"', 'SN-002', 'Monitor', 'Siti', 'Andi', '2025-01-16', '2025-01-23',
+                    'Monitor untuk desain'
+                ],
+                ['Keyboard Mechanical', 'SN-003', 'Keyboard & Mouse', 'Joko', 'Budi', '2025-01-17',
+                    '2025-01-24', 'Keyboard mechanical blue switch'
+                ]
+            ];
 
-    // ==================== INIT ====================
-    if (checkAuth()) {
-        window._activeCategory = 'all';
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Template');
+
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'template_inventaris_it.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        });
+
+        // ============================================================
+        //  INIT
+        // ============================================================
         setDefaultDates();
         toggleItemTypeManualV3();
         toggleLogItemManualV3();
         toggleLogRootManualV3();
-        loadAllData();
+
+        // Set active page
         navigateTo('inventory');
-    }
-  })();
-</script>
+    </script>
 </body>
 </html>
