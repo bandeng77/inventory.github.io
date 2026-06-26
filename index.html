@@ -12,13 +12,13 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
     <!-- SheetJS untuk membaca file Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* ===== ALL STYLES SAMA SEPERTI SEBELUMNYA ===== */
+        /* ===== ALL STYLES ===== */
         * {
             margin: 0;
             padding: 0;
@@ -1179,11 +1179,12 @@
 
     <script>
         // ============================================================
-        //  FIREBASE CONFIG
+        //  FIREBASE CONFIG - REALTIME DATABASE
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyAtZe_Zo4EYD3QUe2aIveHnawRb3GXsVJM",
             authDomain: "panduan-genetek.firebaseapp.com",
+            databaseURL: "https://panduan-genetek-default-rtdb.asia-southeast1.firebasedatabase.app/",
             projectId: "panduan-genetek",
             storageBucket: "panduan-genetek.firebasestorage.app",
             messagingSenderId: "654454090409",
@@ -1192,7 +1193,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
+        const database = firebase.database();
 
         // ============================================================
         //  GLOBAL STATE
@@ -1263,7 +1264,7 @@
             if (user) {
                 currentUser = user;
 
-                // Ambil data dari localStorage atau Firestore
+                // Ambil data dari localStorage
                 const savedUser = localStorage.getItem('itUser');
                 let userData = {};
                 if (savedUser) {
@@ -1298,17 +1299,17 @@
         });
 
         // ============================================================
-        //  FIRESTORE HELPERS
+        //  REALTIME DATABASE HELPERS
         // ============================================================
-        const COLLECTION_ITEMS = 'itItems';
-        const COLLECTION_LOGS = 'itLogs';
+        const PATH_ITEMS = 'itItems';
+        const PATH_LOGS = 'itLogs';
 
         async function loadAllData() {
             if (!currentUser) return;
             try {
                 await Promise.all([
-                    loadItemsFromFirestore(),
-                    loadLogsFromFirestore()
+                    loadItemsFromRTDB(),
+                    loadLogsFromRTDB()
                 ]);
                 renderInventory();
                 renderLogs();
@@ -1319,113 +1320,150 @@
             }
         }
 
-        async function loadItemsFromFirestore() {
-            try {
-                const snapshot = await db.collection(COLLECTION_ITEMS)
-                    .where('userId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
-                    .get();
-
-                const items = [];
-                snapshot.forEach(doc => {
-                    items.push({
-                        id: doc.id,
-                        ...doc.data()
+        // ----- ITEMS -----
+        async function loadItemsFromRTDB() {
+            return new Promise((resolve, reject) => {
+                const userItemsRef = database.ref(`${PATH_ITEMS}/${currentUser.uid}`);
+                
+                userItemsRef.once('value', function(snapshot) {
+                    const items = [];
+                    snapshot.forEach(function(childSnapshot) {
+                        const item = childSnapshot.val();
+                        item.id = childSnapshot.key;
+                        items.push(item);
                     });
+                    
+                    // Sort by createdAt desc
+                    items.sort((a, b) => {
+                        return (b.createdAt || 0) - (a.createdAt || 0);
+                    });
+                    
+                    _items = items;
+                    console.log('Items loaded:', items.length);
+                    resolve(items);
+                }, function(error) {
+                    console.error('Error loading items:', error);
+                    _items = [];
+                    reject(error);
                 });
-
-                _items = items;
-                return items;
-            } catch (error) {
-                console.error('Error loading items:', error);
-                _items = [];
-                return [];
-            }
+            });
         }
 
-        async function saveItemToFirestore(item) {
+        async function saveItemToRTDB(item) {
             if (!currentUser) throw new Error('User not authenticated');
-            try {
-                const docRef = await db.collection(COLLECTION_ITEMS).add({
+            return new Promise((resolve, reject) => {
+                const userItemsRef = database.ref(`${PATH_ITEMS}/${currentUser.uid}`);
+                const newItemRef = userItemsRef.push();
+                
+                const itemData = {
                     ...item,
                     userId: currentUser.uid,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: Date.now()
+                };
+                
+                newItemRef.set(itemData, function(error) {
+                    if (error) {
+                        console.error('Error saving item:', error);
+                        reject(error);
+                    } else {
+                        const savedItem = { id: newItemRef.key, ...itemData };
+                        resolve(savedItem);
+                    }
                 });
-                return { id: docRef.id, ...item };
-            } catch (error) {
-                console.error('Error saving item:', error);
-                throw error;
-            }
+            });
         }
 
-        async function deleteItemFromFirestore(itemId) {
+        async function deleteItemFromRTDB(itemId) {
             if (!currentUser) throw new Error('User not authenticated');
-            try {
-                await db.collection(COLLECTION_ITEMS).doc(itemId).delete();
-            } catch (error) {
-                console.error('Error deleting item:', error);
-                throw error;
-            }
+            return new Promise((resolve, reject) => {
+                const itemRef = database.ref(`${PATH_ITEMS}/${currentUser.uid}/${itemId}`);
+                itemRef.remove(function(error) {
+                    if (error) {
+                        console.error('Error deleting item:', error);
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
         }
 
-        async function loadLogsFromFirestore() {
-            try {
-                const snapshot = await db.collection(COLLECTION_LOGS)
-                    .where('userId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
-                    .get();
-
-                const logs = [];
-                snapshot.forEach(doc => {
-                    logs.push({
-                        id: doc.id,
-                        ...doc.data()
+        // ----- LOGS -----
+        async function loadLogsFromRTDB() {
+            return new Promise((resolve, reject) => {
+                const userLogsRef = database.ref(`${PATH_LOGS}/${currentUser.uid}`);
+                
+                userLogsRef.once('value', function(snapshot) {
+                    const logs = [];
+                    snapshot.forEach(function(childSnapshot) {
+                        const log = childSnapshot.val();
+                        log.id = childSnapshot.key;
+                        logs.push(log);
                     });
+                    
+                    // Sort by createdAt desc
+                    logs.sort((a, b) => {
+                        return (b.createdAt || 0) - (a.createdAt || 0);
+                    });
+                    
+                    _logs = logs;
+                    console.log('Logs loaded:', logs.length);
+                    resolve(logs);
+                }, function(error) {
+                    console.error('Error loading logs:', error);
+                    _logs = [];
+                    reject(error);
                 });
-
-                _logs = logs;
-                return logs;
-            } catch (error) {
-                console.error('Error loading logs:', error);
-                _logs = [];
-                return [];
-            }
+            });
         }
 
-        async function saveLogToFirestore(log) {
+        async function saveLogToRTDB(log) {
             if (!currentUser) throw new Error('User not authenticated');
-            try {
-                const docRef = await db.collection(COLLECTION_LOGS).add({
+            return new Promise((resolve, reject) => {
+                const userLogsRef = database.ref(`${PATH_LOGS}/${currentUser.uid}`);
+                const newLogRef = userLogsRef.push();
+                
+                const logData = {
                     ...log,
                     userId: currentUser.uid,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: Date.now()
+                };
+                
+                newLogRef.set(logData, function(error) {
+                    if (error) {
+                        console.error('Error saving log:', error);
+                        reject(error);
+                    } else {
+                        const savedLog = { id: newLogRef.key, ...logData };
+                        resolve(savedLog);
+                    }
                 });
-                return { id: docRef.id, ...log };
-            } catch (error) {
-                console.error('Error saving log:', error);
-                throw error;
-            }
+            });
         }
 
-        async function deleteLogFromFirestore(logId) {
+        async function deleteLogFromRTDB(logId) {
             if (!currentUser) throw new Error('User not authenticated');
-            try {
-                await db.collection(COLLECTION_LOGS).doc(logId).delete();
-            } catch (error) {
-                console.error('Error deleting log:', error);
-                throw error;
-            }
+            return new Promise((resolve, reject) => {
+                const logRef = database.ref(`${PATH_LOGS}/${currentUser.uid}/${logId}`);
+                logRef.remove(function(error) {
+                    if (error) {
+                        console.error('Error deleting log:', error);
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
         }
 
         // ============================================================
         //  DATA OPERATIONS
         // ============================================================
         function getItems() { return _items; }
-
         function getLogs() { return _logs; }
 
         async function addItem(item) {
-            const saved = await saveItemToFirestore(item);
+            const saved = await saveItemToRTDB(item);
             _items.unshift(saved);
             return saved;
         }
@@ -1435,7 +1473,7 @@
             if (index >= 0 && index < items.length) {
                 const item = items[index];
                 if (item.id) {
-                    await deleteItemFromFirestore(item.id);
+                    await deleteItemFromRTDB(item.id);
                 }
                 items.splice(index, 1);
                 _items = items;
@@ -1443,7 +1481,7 @@
         }
 
         async function addLog(log) {
-            const saved = await saveLogToFirestore(log);
+            const saved = await saveLogToRTDB(log);
             _logs.unshift(saved);
             return saved;
         }
@@ -1453,7 +1491,7 @@
             if (index >= 0 && index < logs.length) {
                 const log = logs[index];
                 if (log.id) {
-                    await deleteLogFromFirestore(log.id);
+                    await deleteLogFromRTDB(log.id);
                 }
                 logs.splice(index, 1);
                 _logs = logs;
@@ -1727,7 +1765,7 @@
         }
 
         // ============================================================
-        //  IMPORT EXCEL FUNCTIONS (DIPERBAIKI)
+        //  IMPORT EXCEL FUNCTIONS
         // ============================================================
         function handleFile(file) {
             const reader = new FileReader();
@@ -1738,14 +1776,13 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-                    console.log('Data dari Excel:', jsonData); // Debug
+                    console.log('Data dari Excel:', jsonData);
 
                     if (!jsonData || jsonData.length === 0) {
                         alert('File Excel kosong atau tidak memiliki data.');
                         return;
                     }
 
-                    // Mapping header otomatis
                     const columns = Object.keys(jsonData[0]);
                     console.log('Kolom yang ditemukan:', columns);
 
@@ -1771,9 +1808,7 @@
                         }
                     });
 
-                    console.log('Header mapping:', headerMap);
-
-                    importedData = jsonData.map((row, index) => {
+                    importedData = jsonData.map((row) => {
                         const item = {
                             name: row[headerMap['name']] || row['Nama Barang'] || row['Nama'] || row['Barang'] ||
                                 '',
@@ -1821,7 +1856,7 @@
         function showPreview(data) {
             previewCount.textContent = data.length;
             let html = '';
-            data.slice(0, 100).forEach((item, idx) => {
+            data.slice(0, 100).forEach((item) => {
                 html += `<tr>
                     <td><strong>${escapeHtml(item.name)}</strong></td>
                     <td>${escapeHtml(item.serial || '-')}</td>
@@ -2016,7 +2051,6 @@
             if (this.files.length) {
                 handleFile(this.files[0]);
             }
-            // Reset input agar bisa upload file yang sama lagi
             this.value = '';
         });
 
@@ -2100,7 +2134,6 @@
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(templateData);
 
-            // Set column widths
             ws['!cols'] = [
                 { wch: 20 },
                 { wch: 15 },
@@ -2133,12 +2166,11 @@
         toggleLogItemManualV3();
         toggleLogRootManualV3();
 
-        // Set active page
         navigateTo('inventory');
 
         console.log('✅ IT Inventory Manager siap digunakan!');
-        console.log('📌 Fitur Import Excel: Upload file .xlsx atau .xls');
-        console.log('📌 Template Excel dapat didownload di halaman Import');
+        console.log('📌 Menggunakan Firebase Realtime Database');
+        console.log('📌 Database URL:', firebaseConfig.databaseURL);
     </script>
 </body>
 </html>
