@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT Inventory Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  
+  <!-- SheetJS untuk membaca file Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <style>
+    /* ... semua CSS dari sebelumnya tetap sama ... */
+    /* Tambahkan logout button style */
+    .btn-logout {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+    }
+    .btn-logout i { color: #fca5a5; }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #475569;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .user-info .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1a2639;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- sidebar -->
+<div class="sidebar">
+  <div class="sidebar-brand"><i class="fas fa-server"></i><span>IT Inventory</span></div>
+  <div class="sidebar-menu">
+    <a href="#" class="active" data-page="inventory"><i class="fas fa-boxes"></i><span>Daftar Barang</span></a>
+    <a href="#" data-page="logs"><i class="fas fa-clipboard-list"></i><span>Log Kerusakan</span></a>
+    <a href="#" data-page="import"><i class="fas fa-file-import"></i><span>Import Excel</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      <div class="avatar" id="userAvatar">U</div>
+      <span id="userNameDisplay" style="font-size:0.8rem; color:#1e293b; font-weight:600;">User</span>
+    </div>
+    <button class="btn-logout" id="logoutBtn" style="width:100%; justify-content:center;">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+</div>
+
+<!-- main -->
+<div class="main">
+  <!-- ... semua konten sama seperti sebelumnya ... -->
+</div>
+
+<script>
+  (function() {
+    // ==================== FIREBASE CONFIG ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAtZe_Zo4EYD3QUe2aIveHnawRb3GXsVJM",
+        authDomain: "panduan-genetek.firebaseapp.com",
+        projectId: "panduan-genetek",
+        storageBucket: "panduan-genetek.firebasestorage.app",
+        messagingSenderId: "654454090409",
+        appId: "1:654454090409:web:d1c4bc92b9be50218c57b8"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ==================== AUTH STATE ====================
+    let currentUser = null;
+
+    auth.onAuthStateChanged(function(user) {
+        if (user) {
+            currentUser = user;
+            updateUserUI(user);
+            // Load data dari Firestore
+            loadAllData();
+        } else {
+            // Redirect ke login
+            window.location.href = 'login.html';
+        }
+    });
+
+    function updateUserUI(user) {
+        const displayName = user.displayName || user.email?.split('@')[0] || 'User';
+        const initial = displayName.charAt(0).toUpperCase();
+        document.getElementById('userNameDisplay').textContent = displayName;
+        document.getElementById('userAvatar').textContent = initial;
+    }
+
+    // ==================== LOGOUT ====================
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        auth.signOut().then(() => {
+            window.location.href = 'login.html';
+        });
+    });
+
+    // ==================== FIRESTORE HELPERS ====================
+    const COLLECTION_ITEMS = 'itItems';
+    const COLLECTION_LOGS = 'itLogs';
+
+    async function loadAllData() {
+        if (!currentUser) return;
+        try {
+            await Promise.all([
+                loadItemsFromFirestore(),
+                loadLogsFromFirestore()
+            ]);
+            renderInventory();
+            renderLogs();
+            populateLogSelect();
+        } catch (error) {
+            console.error('Error loading data:', error);
+            alert('Gagal memuat data. Silakan refresh halaman.');
+        }
+    }
+
+    // ----- ITEMS -----
+    async function loadItemsFromFirestore() {
+        try {
+            const snapshot = await db.collection(COLLECTION_ITEMS)
+                .where('userId', '==', currentUser.uid)
+                .get();
+            
+            const items = [];
+            snapshot.forEach(doc => {
+                items.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            // Simpan ke variabel lokal
+            window._items = items;
+            return items;
+        } catch (error) {
+            console.error('Error loading items:', error);
+            window._items = [];
+            return [];
+        }
+    }
+
+    async function saveItemToFirestore(item) {
+        if (!currentUser) throw new Error('User not authenticated');
+        try {
+            const docRef = await db.collection(COLLECTION_ITEMS).add({
+                ...item,
+                userId: currentUser.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return { id: docRef.id, ...item };
+        } catch (error) {
+            console.error('Error saving item:', error);
+            throw error;
+        }
+    }
+
+    async function deleteItemFromFirestore(itemId) {
+        if (!currentUser) throw new Error('User not authenticated');
+        try {
+            await db.collection(COLLECTION_ITEMS).doc(itemId).delete();
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            throw error;
+        }
+    }
+
+    async function updateItemInFirestore(itemId, data) {
+        if (!currentUser) throw new Error('User not authenticated');
+        try {
+            await db.collection(COLLECTION_ITEMS).doc(itemId).update(data);
+        } catch (error) {
+            console.error('Error updating item:', error);
+            throw error;
+        }
+    }
+
+    // ----- LOGS -----
+    async function loadLogsFromFirestore() {
+        try {
+            const snapshot = await db.collection(COLLECTION_LOGS)
+                .where('userId', '==', currentUser.uid)
+                .orderBy('date', 'desc')
+                .get();
+            
+            const logs = [];
+            snapshot.forEach(doc => {
+                logs.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            window._logs = logs;
+            return logs;
+        } catch (error) {
+            console.error('Error loading logs:', error);
+            window._logs = [];
+            return [];
+        }
+    }
+
+    async function saveLogToFirestore(log) {
+        if (!currentUser) throw new Error('User not authenticated');
+        try {
+            const docRef = await db.collection(COLLECTION_LOGS).add({
+                ...log,
+                userId: currentUser.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return { id: docRef.id, ...log };
+        } catch (error) {
+            console.error('Error saving log:', error);
+            throw error;
+        }
+    }
+
+    async function deleteLogFromFirestore(logId) {
+        if (!currentUser) throw new Error('User not authenticated');
+        try {
+            await db.collection(COLLECTION_LOGS).doc(logId).delete();
+        } catch (error) {
+            console.error('Error deleting log:', error);
+            throw error;
+        }
+    }
+
+    // ==================== GETTERS ====================
+    function getItems() { return window._items || []; }
+    function getLogs() { return window._logs || []; }
+
+    // ==================== SETTERS (sync with Firestore) ====================
+    async function addItem(item) {
+        const saved = await saveItemToFirestore(item);
+        window._items.push(saved);
+        return saved;
+    }
+
+    async function removeItem(index) {
+        const items = getItems();
+        if (index >= 0 && index < items.length) {
+            const item = items[index];
+            if (item.id) {
+                await deleteItemFromFirestore(item.id);
+            }
+            items.splice(index, 1);
+            window._items = items;
+        }
+    }
+
+    async function addLog(log) {
+        const saved = await saveLogToFirestore(log);
+        window._logs.unshift(saved);
+        return saved;
+    }
+
+    async function removeLog(index) {
+        const logs = getLogs();
+        if (index >= 0 && index < logs.length) {
+            const log = logs[index];
+            if (log.id) {
+                await deleteLogFromFirestore(log.id);
+            }
+            logs.splice(index, 1);
+            window._logs = logs;
+        }
+    }
+
+    // ==================== RENDER FUNCTIONS (modified) ====================
+    function renderInventory() {
+        let items = getItems();
+        const search = document.getElementById('searchInventory').value.toLowerCase();
+        const sort = document.getElementById('sortInventory').value;
+
+        // Filter by category
+        const activeCategory = window._activeCategory || 'all';
+        if (activeCategory !== 'all') {
+            items = items.filter(it => it.type === activeCategory);
+        }
+
+        if (search) {
+            items = items.filter(it => 
+                it.name.toLowerCase().includes(search) ||
+                (it.serial && it.serial.toLowerCase().includes(search)) ||
+                it.type.toLowerCase().includes(search) ||
+                it.user.toLowerCase().includes(search) ||
+                it.pic.toLowerCase().includes(search) ||
+                (it.description && it.description.toLowerCase().includes(search))
+            );
+        }
+
+        // Sort
+        if (sort === 'name') items.sort((a,b) => a.name.localeCompare(b.name));
+        else if (sort === 'type') items.sort((a,b) => a.type.localeCompare(b.type));
+        else if (sort === 'serial') items.sort((a,b) => (a.serial || '').localeCompare(b.serial || ''));
+        else if (sort === 'user') items.sort((a,b) => a.user.localeCompare(b.user));
+        else if (sort === 'lendDate') items.sort((a,b) => (a.lendDate || '').localeCompare(b.lendDate || ''));
+        else if (sort === 'returnDate') items.sort((a,b) => (a.returnDate || '').localeCompare(b.returnDate || ''));
+
+        const tbody = document.getElementById('inventoryTableBody');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Tidak ada barang${activeCategory !== 'all' ? ' di kategori ' + activeCategory : ''}</td></tr>`; 
+            return; 
+        }
+
+        let html = '';
+        items.forEach((item, idx) => {
+            const realIndex = getItems().indexOf(item);
+            html += `<tr class="fade-row">
+                <td><strong>${escapeHtml(item.name)}</strong></td>
+                <td><span class="badge">${escapeHtml(item.serial || '-')}</span></td>
+                <td><span class="badge">${escapeHtml(item.type)}</span></td>
+                <td>${escapeHtml(item.user)}</td>
+                <td>${escapeHtml(item.pic)}</td>
+                <td>${formatDate(item.lendDate)}</td>
+                <td>${formatDate(item.returnDate)}</td>
+                <td><span class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</span></td>
+                <td>
+                    <div class="action-buttons-cell">
+                        <button class="btn btn-danger btn-add-log" data-item-name="${escapeHtml(item.name)}" data-item-type="${escapeHtml(item.type)}" title="Tambah ke Log Kerusakan"><i class="fas fa-clipboard-plus"></i></button>
+                        <button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-inv-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        
+        // Delete button
+        tbody.querySelectorAll('[data-inv-idx]').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const idx = parseInt(this.dataset.invIdx, 10);
+                if (confirm('Hapus barang ini?')) {
+                    try {
+                        await removeItem(idx);
+                        renderInventory();
+                        populateLogSelect();
+                    } catch (error) {
+                        alert('Gagal menghapus: ' + error.message);
+                    }
+                }
+            });
+        });
+
+        // Add to log button
+        tbody.querySelectorAll('.btn-add-log').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemName = this.dataset.itemName;
+                const itemType = this.dataset.itemType;
+                navigateTo('logs');
+                document.getElementById('logCategoryFilter').value = itemType;
+                populateLogSelect();
+                setTimeout(() => {
+                    const select = document.getElementById('logItemSelect');
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value === itemName) {
+                            select.value = itemName;
+                            toggleLogItemManualV3();
+                            break;
+                        }
+                    }
+                    const card = document.getElementById('addLogCard');
+                    if (card.style.display === 'none' || !card.style.display) {
+                        toggleCard(card);
+                    }
+                    setDefaultDates();
+                    document.getElementById('logForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            });
+        });
+    }
+
+    function renderLogs() {
+        let logs = getLogs();
+        const search = document.getElementById('searchLog').value.toLowerCase();
+        const filterType = document.getElementById('filterLogType').value;
+        
+        if (search) logs = logs.filter(l => l.item.toLowerCase().includes(search) || l.rootCause.toLowerCase().includes(search));
+        if (filterType !== 'all') logs = logs.filter(l => l.type === filterType);
+
+        const tbody = document.getElementById('logTableBody');
+        if (!logs.length) { 
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Belum ada log</td></tr>`; 
+            return; 
+        }
+        
+        let html = '';
+        logs.forEach((log, idx) => {
+            const realIndex = getLogs().indexOf(log);
+            const typeLabel = log.type === 'rusak' ? 'Rusak' : 'Pergantian';
+            const cls = log.type === 'rusak' ? 'rusak' : 'ganti';
+            html += `<tr class="fade-row">
+                <td><strong>${escapeHtml(log.item)}</strong></td>
+                <td><span class="badge ${cls}">${typeLabel}</span></td>
+                <td>${escapeHtml(log.rootCause)}</td>
+                <td>${escapeHtml(log.date)}</td>
+                <td><button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-log-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        
+        tbody.querySelectorAll('[data-log-idx]').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const idx = parseInt(this.dataset.logIdx, 10);
+                if (confirm('Hapus log ini?')) {
+                    try {
+                        await removeLog(idx);
+                        renderLogs();
+                    } catch (error) {
+                        alert('Gagal menghapus: ' + error.message);
+                    }
+                }
+            });
+        });
+    }
+
+    // ==================== FORM SUBMIT (modified) ====================
+    // Item Form
+    document.getElementById('itemForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        let type = document.getElementById('itemType').value;
+        if (type === 'other') { 
+            type = document.getElementById('manualTypeV3').value.trim(); 
+            if (!type) { alert('Isi jenis barang manual'); return; } 
+        }
+        const name = document.getElementById('itemName').value.trim(); 
+        if (!name) { alert('Nama barang wajib'); return; }
+        
+        const item = {
+            name,
+            serial: document.getElementById('itemSerial').value.trim() || '',
+            type,
+            user: document.getElementById('itemUser').value.trim() || '-',
+            pic: document.getElementById('itemPic').value.trim() || '-',
+            lendDate: document.getElementById('itemLendDate').value || '',
+            returnDate: document.getElementById('itemReturnDate').value || '',
+            description: document.getElementById('itemDescription').value.trim() || ''
+        };
+
+        try {
+            await addItem(item);
+            renderInventory();
+            populateLogSelect();
+            document.getElementById('itemForm').reset();
+            document.getElementById('addItemCard').style.display = 'none';
+            toggleItemTypeManualV3();
+            setDefaultDates();
+        } catch (error) {
+            alert('Gagal menyimpan: ' + error.message);
+        }
+    });
+
+    // Log Form
+    document.getElementById('logForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        let item = document.getElementById('logItemSelect').value;
+        if (item === 'other') { 
+            item = document.getElementById('logManualItemV3').value.trim(); 
+            if (!item) { alert('Isi nama barang manual'); return; } 
+        } else if (!item) { alert('Pilih barang'); return; }
+        
+        let rootCause = document.getElementById('logRoot').value;
+        if (rootCause === 'Other') { 
+            rootCause = document.getElementById('logManualRootV3').value.trim(); 
+            if (!rootCause) { alert('Isi root cause manual'); return; } 
+        }
+        
+        const log = {
+            item,
+            type: document.getElementById('logType').value,
+            rootCause,
+            date: document.getElementById('logDate').value || new Date().toISOString().slice(0,10)
+        };
+
+        try {
+            await addLog(log);
+            renderLogs();
+            document.getElementById('logForm').reset();
+            document.getElementById('addLogCard').style.display = 'none';
+            toggleLogItemManualV3();
+            toggleLogRootManualV3();
+            setDefaultDates();
+            populateLogSelect();
+        } catch (error) {
+            alert('Gagal menyimpan log: ' + error.message);
+        }
+    });
+
+    // ==================== CATEGORY FILTER ====================
+    document.getElementById('categoryFilter').addEventListener('click', function(e) {
+        const chip = e.target.closest('.category-chip');
+        if (!chip) return;
+        
+        this.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        window._activeCategory = chip.dataset.category;
+        renderInventory();
+    });
+
+    // ==================== INITIAL SETUP ====================
+    // Setup default values
+    window._activeCategory = 'all';
+    
+    // Helper functions (dari kode sebelumnya)
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/[&<>"']/g, function(m) {
+            if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;'; return '&#039;';
+        });
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            const d = new Date(dateStr + 'T00:00:00');
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        } catch { return dateStr; }
+    }
+
+    // ... (semua fungsi helper lainnya sama seperti sebelumnya) ...
+
+    // Navigation
+    function navigateTo(page) {
+        document.querySelectorAll('.sidebar-menu a').forEach(l => l.classList.remove('active'));
+        document.querySelector(`.sidebar-menu a[data-page="${page}"]`)?.classList.add('active');
+        
+        document.getElementById('inventoryPage').classList.add('hidden');
+        document.getElementById('logsPage').classList.add('hidden');
+        document.getElementById('importPage').classList.add('hidden');
+        
+        if (page === 'inventory') {
+            document.getElementById('inventoryPage').classList.remove('hidden');
+            renderInventory();
+        } else if (page === 'logs') {
+            document.getElementById('logsPage').classList.remove('hidden');
+            renderLogs();
+            populateLogSelect();
+        } else if (page === 'import') {
+            document.getElementById('importPage').classList.remove('hidden');
+        }
+    }
+
+    // Sidebar navigation
+    document.querySelectorAll('.sidebar-menu a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            navigateTo(this.dataset.page);
+        });
+    });
+
+    // ... (semua event listener lainnya sama) ...
+
+    // Populate log select
+    function populateLogSelect() {
+        const items = getItems();
+        const selectedCategory = document.getElementById('logCategoryFilter').value;
+        
+        let filteredItems = items;
+        if (selectedCategory !== 'all') {
+            filteredItems = items.filter(it => it.type === selectedCategory);
+        }
+
+        const select = document.getElementById('logItemSelect');
+        select.innerHTML = '<option value="">-- pilih barang --</option>';
+        if (filteredItems.length === 0) {
+            select.innerHTML += '<option value="" disabled>-- tidak ada barang di kategori ini --</option>';
+        } else {
+            filteredItems.forEach(it => {
+                const opt = document.createElement('option');
+                opt.value = it.name;
+                opt.textContent = `${it.name} ${it.serial ? '(' + it.serial + ')' : ''}`;
+                select.appendChild(opt);
+            });
+        }
+        const otherOpt = document.createElement('option');
+        otherOpt.value = 'other';
+        otherOpt.textContent = '➕ Other (manual)';
+        select.appendChild(otherOpt);
+    }
+
+    // Set default dates
+    function setDefaultDates() {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+        document.getElementById('logDate').value = dateStr;
+        document.getElementById('itemLendDate').value = dateStr;
+        const returnDate = new Date(today);
+        returnDate.setDate(returnDate.getDate() + 7);
+        const ry = returnDate.getFullYear();
+        const rm = String(returnDate.getMonth() + 1).padStart(2, '0');
+        const rd = String(returnDate.getDate()).padStart(2, '0');
+        document.getElementById('itemReturnDate').value = `${ry}-${rm}-${rd}`;
+    }
+
+    // Toggle functions
+    function toggleManualInputV3(inputElement, show) {
+        if (show) {
+            inputElement.classList.add('visible');
+        } else {
+            inputElement.classList.remove('visible');
+            inputElement.value = '';
+        }
+    }
+
+    function toggleLogItemManualV3() {
+        const show = document.getElementById('logItemSelect').value === 'other';
+        toggleManualInputV3(document.getElementById('logManualItemV3'), show);
+    }
+
+    function toggleLogRootManualV3() {
+        const show = document.getElementById('logRoot').value === 'Other';
+        toggleManualInputV3(document.getElementById('logManualRootV3'), show);
+    }
+
+    function toggleItemTypeManualV3() {
+        const show = document.getElementById('itemType').value === 'other';
+        toggleManualInputV3(document.getElementById('manualTypeV3'), show);
+    }
+
+    function toggleCard(card) {
+        if (card.style.display === 'none' || !card.style.display) {
+            card.style.display = 'block';
+            card.classList.remove('card-slide');
+            void card.offsetWidth;
+            card.classList.add('card-slide');
+        } else {
+            card.classList.remove('card-slide');
+            setTimeout(() => { card.style.display = 'none'; }, 300);
+        }
+    }
+
+    // Event listeners
+    document.getElementById('showAddItemBtn').addEventListener('click', () => toggleCard(document.getElementById('addItemCard')));
+    document.getElementById('showAddLogBtn').addEventListener('click', () => toggleCard(document.getElementById('addLogCard')));
+    
+    document.getElementById('itemType').addEventListener('change', toggleItemTypeManualV3);
+    document.getElementById('logItemSelect').addEventListener('change', toggleLogItemManualV3);
+    document.getElementById('logRoot').addEventListener('change', toggleLogRootManualV3);
+    document.getElementById('logCategoryFilter').addEventListener('change', populateLogSelect);
+
+    document.getElementById('searchInventory').addEventListener('input', renderInventory);
+    document.getElementById('sortInventory').addEventListener('change', renderInventory);
+    document.getElementById('resetFilterInv').addEventListener('click', function() { 
+        document.getElementById('searchInventory').value = ''; 
+        document.getElementById('sortInventory').value = 'name'; 
+        document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+        document.querySelector('.category-chip[data-category="all"]').classList.add('active');
+        window._activeCategory = 'all';
+        renderInventory(); 
+    });
+
+    document.getElementById('searchLog').addEventListener('input', renderLogs);
+    document.getElementById('filterLogType').addEventListener('change', renderLogs);
+    document.getElementById('resetFilterLog').addEventListener('click', function() { 
+        document.getElementById('searchLog').value = ''; 
+        document.getElementById('filterLogType').value = 'all'; 
+        renderLogs(); 
+    });
+
+    // Go to import
+    document.getElementById('goToImportBtn').addEventListener('click', () => navigateTo('import'));
+    document.getElementById('backToInventoryBtn').addEventListener('click', () => navigateTo('inventory'));
+
+    // Import Excel (sama seperti sebelumnya)
+    // ... (kode import Excel tetap sama) ...
+
+    // Initialize
+    setDefaultDates();
+    toggleItemTypeManualV3();
+    toggleLogItemManualV3();
+    toggleLogRootManualV3();
+    
+    // Set initial active page
+    navigateTo('inventory');
+
+  })();
+</script>
+</body>
+</html>
