@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - IT Inventory Manager</title>
+    <title>Login - IT Inventory</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
@@ -30,107 +30,232 @@
             padding: 1.5rem;
         }
 
-        .login-container {
+        .login-wrapper {
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-radius: 40px;
-            padding: 3rem 2.5rem;
-            max-width: 420px;
-            width: 100%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.7);
-            animation: slideUp 0.5s ease;
+            overflow: hidden;
+            animation: slideUp 0.6s ease;
         }
 
         @keyframes slideUp {
             0% {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(30px) scale(0.98);
             }
             100% {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
+        .login-left {
+            flex: 1;
+            padding: 3.5rem 3rem;
+            min-width: 320px;
         }
 
-        .login-header .icon-wrapper {
-            background: #1a2639;
-            width: 72px;
-            height: 72px;
-            border-radius: 24px;
+        .login-right {
+            flex: 0 0 40%;
+            background: linear-gradient(135deg, #1a2639 0%, #2c3e66 100%);
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-right::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+        }
+
+        .login-right .icon-big {
+            font-size: 4.5rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-right h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-right p {
+            opacity: 0.7;
+            font-size: 0.95rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            line-height: 1.6;
+        }
+
+        .login-right .decor-line {
+            width: 60px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 1rem 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .login-header .brand {
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            box-shadow: 0 8px 24px rgba(26, 38, 57, 0.2);
-        }
-
-        .login-header .icon-wrapper i {
-            font-size: 2rem;
-            color: white;
-        }
-
-        .login-header h1 {
-            font-size: 1.5rem;
+            gap: 10px;
+            font-size: 1.3rem;
             font-weight: 700;
             color: #0f172a;
         }
 
+        .login-header .brand i {
+            background: #1a2639;
+            color: white;
+            padding: 8px 10px;
+            border-radius: 14px;
+            font-size: 1.1rem;
+        }
+
+        .login-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 1.5rem;
+        }
+
         .login-header p {
             color: #94a3b8;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             margin-top: 4px;
         }
 
         .form-group {
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.5rem;
         }
 
         .form-group label {
             display: block;
             font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            font-size: 0.8rem;
             color: #475569;
             margin-bottom: 6px;
         }
 
-        .form-group input {
+        .form-group .input-wrapper {
+            position: relative;
+        }
+
+        .form-group .input-wrapper i {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .form-group .input-wrapper input {
             width: 100%;
-            padding: 0.75rem 1.2rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 30px;
-            font-size: 0.9rem;
+            padding: 0.85rem 1.2rem 0.85rem 3rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 0.95rem;
             outline: none;
             transition: all 0.3s ease;
             background: white;
+            color: #0f172a;
         }
 
-        .form-group input:focus {
+        .form-group .input-wrapper input:focus {
             border-color: #1a2639;
             box-shadow: 0 0 0 4px rgba(26, 38, 57, 0.06);
         }
 
-        .form-group input::placeholder {
+        .form-group .input-wrapper input:focus + i,
+        .form-group .input-wrapper input:focus ~ i {
+            color: #1a2639;
+        }
+
+        .form-group .input-wrapper input::placeholder {
             color: #94a3b8;
+        }
+
+        .form-group .input-wrapper .toggle-password {
+            position: absolute;
+            right: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .form-group .input-wrapper .toggle-password:hover {
+            color: #475569;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .error-message.show {
+            display: flex;
         }
 
         .btn-login {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.9rem;
             border: none;
-            border-radius: 30px;
+            border-radius: 16px;
             background: #1a2639;
             color: white;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
@@ -138,12 +263,27 @@
             justify-content: center;
             gap: 10px;
             margin-top: 0.5rem;
-            height: 52px;
+            height: 54px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-login:hover::after {
+            opacity: 1;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(26, 38, 57, 0.25);
+            box-shadow: 0 12px 28px rgba(26, 38, 57, 0.25);
         }
 
         .btn-login:disabled {
@@ -156,103 +296,11 @@
             color: #a0c0ff;
         }
 
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin: 1.5rem 0;
-            color: #94a3b8;
-            font-size: 0.8rem;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
-        }
-
-        .error-message {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 0.75rem 1rem;
-            border-radius: 16px;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            display: none;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .error-message.show {
-            display: flex;
-        }
-
-        .success-message {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 0.75rem 1rem;
-            border-radius: 16px;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            display: none;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .success-message.show {
-            display: flex;
-        }
-
-        .register-link {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.85rem;
-            color: #64748b;
-        }
-
-        .register-link a {
-            color: #1a2639;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .register-link a:hover {
-            text-decoration: underline;
-        }
-
-        .password-toggle {
-            position: relative;
-        }
-
-        .password-toggle input {
-            padding-right: 3rem;
-        }
-
-        .password-toggle .toggle-btn {
-            position: absolute;
-            right: 1.2rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 4px;
-        }
-
-        .password-toggle .toggle-btn:hover {
-            color: #475569;
-        }
-
         .loading-spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 22px;
+            height: 22px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
@@ -264,110 +312,139 @@
             }
         }
 
-        .mode-toggle {
-            display: flex;
-            background: #f1f5f9;
-            border-radius: 30px;
-            padding: 4px;
-            margin-bottom: 1.5rem;
+        .login-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
         }
 
-        .mode-toggle button {
-            flex: 1;
-            padding: 0.6rem;
-            border: none;
-            border-radius: 26px;
-            background: transparent;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #64748b;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .mode-toggle button.active {
-            background: white;
-            color: #0f172a;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-        }
-
-        .mode-toggle button:hover:not(.active) {
+        .login-footer a {
             color: #1a2639;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
         }
 
-        .form-group.hidden {
-            display: none;
+        .login-footer a:hover {
+            text-decoration: underline;
         }
 
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 2rem 1.5rem;
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-wrapper {
+                flex-direction: column;
+                border-radius: 30px;
+                max-width: 420px;
+            }
+
+            .login-left {
+                padding: 2.5rem 1.8rem;
+                min-width: unset;
+            }
+
+            .login-right {
+                flex: none;
+                padding: 2rem 1.8rem;
+                border-radius: 0 0 30px 30px;
+            }
+
+            .login-right .icon-big {
+                font-size: 3rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .login-right h2 {
+                font-size: 1.4rem;
+            }
+
+            .login-right p {
+                font-size: 0.85rem;
+            }
+
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .login-left {
+                padding: 2rem 1.2rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="icon-wrapper">
-                <i class="fas fa-server"></i>
-            </div>
-            <h1>IT Inventory Manager</h1>
-            <p id="modeDescription">Login untuk mengelola inventaris</p>
-        </div>
-
-        <div class="error-message" id="errorMessage">
-            <i class="fas fa-exclamation-circle"></i>
-            <span id="errorText">Error message</span>
-        </div>
-
-        <div class="success-message" id="successMessage">
-            <i class="fas fa-check-circle"></i>
-            <span id="successText">Success message</span>
-        </div>
-
-        <!-- Mode Toggle: Login / Register -->
-        <div class="mode-toggle" id="modeToggle">
-            <button class="active" data-mode="login">Login</button>
-            <button data-mode="register">Daftar</button>
-        </div>
-
-        <!-- Login/Register Form -->
-        <form id="authForm">
-            <div class="form-group">
-                <label><i class="fas fa-user"></i> Username</label>
-                <input type="text" id="usernameInput" placeholder="Masukkan username" required autocomplete="username" />
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-envelope"></i> Email</label>
-                <input type="email" id="emailInput" placeholder="email@domain.com" required autocomplete="email" />
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-lock"></i> Password</label>
-                <div class="password-toggle">
-                    <input type="password" id="passwordInput" placeholder="Minimal 6 karakter" required autocomplete="current-password" />
-                    <button type="button" class="toggle-btn" id="togglePassword">
-                        <i class="fas fa-eye"></i>
-                    </button>
+    <div class="login-wrapper">
+        <!-- Left Side: Form -->
+        <div class="login-left">
+            <div class="login-header">
+                <div class="brand">
+                    <i class="fas fa-server"></i>
+                    <span>IT Inventory</span>
                 </div>
+                <h1>Selamat Datang</h1>
+                <p>Masuk untuk mengelola inventaris</p>
             </div>
-            <div class="form-group hidden" id="confirmPasswordGroup">
-                <label><i class="fas fa-check-circle"></i> Konfirmasi Password</label>
-                <div class="password-toggle">
-                    <input type="password" id="confirmPasswordInput" placeholder="Ulangi password" />
-                    <button type="button" class="toggle-btn" id="toggleConfirmPassword">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-            <button type="submit" class="btn-login" id="authBtn">
-                <i class="fas fa-sign-in-alt"></i>
-                <span id="authBtnText">Login</span>
-            </button>
-        </form>
 
-        <div class="register-link" id="switchModeLink">
-            Belum punya akun? <a id="switchLink">Daftar di sini</a>
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText">Error message</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label><i class="fas fa-user" style="margin-right:6px;"></i> Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input 
+                            type="text" 
+                            id="usernameInput" 
+                            placeholder="Masukkan username" 
+                            required 
+                            autocomplete="username"
+                            autofocus
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-lock" style="margin-right:6px;"></i> Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input 
+                            type="password" 
+                            id="passwordInput" 
+                            placeholder="Masukkan password" 
+                            required 
+                            autocomplete="current-password"
+                        />
+                        <button type="button" class="toggle-password" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span id="loginBtnText">Masuk</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <span>Belum punya akun? </span>
+                <a id="registerLink">Hubungi Admin untuk daftar</a>
+            </div>
+        </div>
+
+        <!-- Right Side: Branding -->
+        <div class="login-right">
+            <div class="icon-big">
+                <i class="fas fa-boxes"></i>
+            </div>
+            <h2>IT Inventory Manager</h2>
+            <div class="decor-line"></div>
+            <p>Kelola inventaris IT dengan mudah<br />dan efisien dalam satu platform</p>
         </div>
     </div>
 
@@ -382,91 +459,47 @@
             appId: "1:654454090409:web:d1c4bc92b9be50218c57b8"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         // ==================== DOM ELEMENTS ====================
-        const authForm = document.getElementById('authForm');
+        const loginForm = document.getElementById('loginForm');
         const usernameInput = document.getElementById('usernameInput');
-        const emailInput = document.getElementById('emailInput');
         const passwordInput = document.getElementById('passwordInput');
-        const confirmPasswordInput = document.getElementById('confirmPasswordInput');
-        const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
-        const authBtn = document.getElementById('authBtn');
-        const authBtnText = document.getElementById('authBtnText');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginBtnText = document.getElementById('loginBtnText');
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
-        const successMessage = document.getElementById('successMessage');
-        const successText = document.getElementById('successText');
         const togglePassword = document.getElementById('togglePassword');
-        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
-        const modeToggle = document.getElementById('modeToggle');
-        const switchLink = document.getElementById('switchLink');
-        const modeDescription = document.getElementById('modeDescription');
+        const registerLink = document.getElementById('registerLink');
 
-        let currentMode = 'login'; // 'login' or 'register'
-
-        // ==================== HELPER FUNCTIONS ====================
+        // ==================== HELPERS ====================
         function showError(message) {
             errorText.textContent = message;
             errorMessage.classList.add('show');
-            successMessage.classList.remove('show');
             setTimeout(() => {
                 errorMessage.classList.remove('show');
-            }, 5000);
-        }
-
-        function showSuccess(message) {
-            successText.textContent = message;
-            successMessage.classList.add('show');
-            errorMessage.classList.remove('show');
-            setTimeout(() => {
-                successMessage.classList.remove('show');
             }, 5000);
         }
 
         function setLoading(loading) {
             if (loading) {
-                authBtn.disabled = true;
-                authBtnText.innerHTML = '<span class="loading-spinner"></span> Loading...';
+                loginBtn.disabled = true;
+                loginBtnText.innerHTML = '<span class="loading-spinner"></span> Memproses...';
             } else {
-                authBtn.disabled = false;
-                authBtnText.textContent = currentMode === 'login' ? 'Login' : 'Daftar';
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Masuk';
             }
         }
 
-        function switchMode(mode) {
-            currentMode = mode;
-            
-            // Update toggle buttons
-            document.querySelectorAll('.mode-toggle button').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === mode);
-            });
-            
-            // Update form
-            if (mode === 'login') {
-                confirmPasswordGroup.classList.add('hidden');
-                authBtnText.textContent = 'Login';
-                authBtn.querySelector('i').className = 'fas fa-sign-in-alt';
-                modeDescription.textContent = 'Login untuk mengelola inventaris';
-                switchLink.innerHTML = 'Belum punya akun? <a id="switchLink">Daftar di sini</a>';
-                document.getElementById('switchLink').addEventListener('click', () => switchMode('register'));
-                // Reset form
-                authForm.reset();
-                errorMessage.classList.remove('show');
-                successMessage.classList.remove('show');
-            } else {
-                confirmPasswordGroup.classList.remove('hidden');
-                authBtnText.textContent = 'Daftar';
-                authBtn.querySelector('i').className = 'fas fa-user-plus';
-                modeDescription.textContent = 'Daftar akun baru untuk mulai menggunakan';
-                switchLink.innerHTML = 'Sudah punya akun? <a id="switchLink">Login di sini</a>';
-                document.getElementById('switchLink').addEventListener('click', () => switchMode('login'));
-                authForm.reset();
-                errorMessage.classList.remove('show');
-                successMessage.classList.remove('show');
-            }
+        // Simple hash function (SHA-256)
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password + 'it-inventory-salt');
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
         }
 
         // ==================== TOGGLE PASSWORD ====================
@@ -477,30 +510,29 @@
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
 
-        toggleConfirmPassword.addEventListener('click', function() {
-            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            confirmPasswordInput.setAttribute('type', type);
-            this.querySelector('i').classList.toggle('fa-eye');
-            this.querySelector('i').classList.toggle('fa-eye-slash');
-        });
+        // ==================== LOGIN ====================
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
 
-        // ==================== MODE TOGGLE ====================
-        document.querySelectorAll('.mode-toggle button').forEach(btn => {
-            btn.addEventListener('click', function() {
-                switchMode(this.dataset.mode);
-            });
-        });
+            if (!username || !password) {
+                showError('Username dan password wajib diisi.');
+                return;
+            }
 
-        // ==================== AUTH FUNCTIONS ====================
-        async function loginUser(email, password) {
+            setLoading(true);
+
             try {
-                // Cari user di Firestore berdasarkan email
+                // Cari user berdasarkan username
                 const usersRef = db.collection('users');
-                const snapshot = await usersRef.where('email', '==', email).get();
+                const snapshot = await usersRef.where('username', '==', username).get();
                 
                 if (snapshot.empty) {
-                    showError('Email tidak terdaftar. Silakan daftar terlebih dahulu.');
-                    return false;
+                    showError('Username tidak ditemukan.');
+                    setLoading(false);
+                    return;
                 }
 
                 let userData = null;
@@ -510,157 +542,67 @@
                     userId = doc.id;
                 });
 
-                // Verifikasi password (simple hash comparison)
-                // Note: Dalam produksi, gunakan bcrypt atau hash yang lebih aman
+                // Verifikasi password
                 const hashedPassword = await hashPassword(password);
                 if (userData.password !== hashedPassword) {
                     showError('Password salah. Silakan coba lagi.');
-                    return false;
+                    setLoading(false);
+                    return;
                 }
 
                 // Login sukses
                 const user = {
                     id: userId,
                     username: userData.username,
-                    email: userData.email,
+                    email: userData.email || '',
                     displayName: userData.username,
-                    createdAt: userData.createdAt
+                    role: userData.role || 'user'
                 };
                 
-                // Simpan session di localStorage
+                // Simpan session
                 localStorage.setItem('itUser', JSON.stringify(user));
-                showSuccess('Login berhasil! Mengalihkan...');
                 
-                setTimeout(() => {
-                    window.location.href = 'IT-Inventory.html';
-                }, 1000);
+                // Redirect ke halaman utama
+                window.location.href = 'IT-Inventory.html';
                 
-                return true;
             } catch (error) {
                 console.error('Login error:', error);
-                showError('Terjadi kesalahan: ' + error.message);
-                return false;
-            }
-        }
-
-        async function registerUser(username, email, password) {
-            try {
-                // Cek apakah username sudah digunakan
-                const usernameCheck = await db.collection('users')
-                    .where('username', '==', username)
-                    .get();
-                
-                if (!usernameCheck.empty) {
-                    showError('Username sudah digunakan. Silakan pilih username lain.');
-                    return false;
-                }
-
-                // Cek apakah email sudah digunakan
-                const emailCheck = await db.collection('users')
-                    .where('email', '==', email)
-                    .get();
-                
-                if (!emailCheck.empty) {
-                    showError('Email sudah terdaftar. Silakan login.');
-                    return false;
-                }
-
-                // Hash password
-                const hashedPassword = await hashPassword(password);
-
-                // Simpan user ke Firestore
-                await db.collection('users').add({
-                    username: username,
-                    email: email,
-                    password: hashedPassword,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    role: 'user'
-                });
-
-                showSuccess('Pendaftaran berhasil! Silakan login.');
-                
-                // Switch ke mode login setelah 2 detik
-                setTimeout(() => {
-                    switchMode('login');
-                    authForm.reset();
-                    showSuccess('Silakan login dengan akun baru Anda.');
-                }, 2000);
-                
-                return true;
-            } catch (error) {
-                console.error('Register error:', error);
-                showError('Terjadi kesalahan: ' + error.message);
-                return false;
-            }
-        }
-
-        // Simple hash function (untuk demo)
-        // Dalam produksi, gunakan library hashing yang lebih aman
-        async function hashPassword(password) {
-            // Simple hash menggunakan btoa (Base64) - hanya untuk demo
-            // Untuk produksi, gunakan bcrypt atau CryptoJS
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password + 'it-inventory-salt');
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
-        }
-
-        // ==================== FORM SUBMIT ====================
-        authForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = usernameInput.value.trim();
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-
-            // Validasi
-            if (!username || !email || !password) {
-                showError('Semua field wajib diisi.');
-                return;
-            }
-
-            if (password.length < 6) {
-                showError('Password minimal 6 karakter.');
-                return;
-            }
-
-            if (currentMode === 'login') {
-                setLoading(true);
-                await loginUser(email, password);
-                setLoading(false);
-            } else {
-                // Register mode
-                const confirmPassword = confirmPasswordInput.value;
-                if (password !== confirmPassword) {
-                    showError('Password dan konfirmasi password tidak sama.');
-                    return;
-                }
-                setLoading(true);
-                await registerUser(username, email, password);
+                showError('Terjadi kesalahan. Silakan coba lagi.');
                 setLoading(false);
             }
         });
 
-        // ==================== SWITCH MODE VIA LINK ====================
-        switchLink.addEventListener('click', function(e) {
+        // ==================== REGISTER LINK ====================
+        registerLink.addEventListener('click', function(e) {
             e.preventDefault();
-            if (currentMode === 'login') {
-                switchMode('register');
-            } else {
-                switchMode('login');
-            }
+            alert('Untuk mendaftar, silakan hubungi admin IT.\n\nAtau buka console dan ketik:\nregisterUser("username", "email@domain.com", "password")');
+            
+            // Hidden register function untuk admin
+            console.log('=== REGISTER USER ===');
+            console.log('Gunakan fungsi di bawah ini untuk register (hanya untuk admin):');
+            console.log(`
+async function registerUser(username, email, password) {
+    const hashed = await hashPassword(password);
+    await db.collection('users').add({
+        username: username,
+        email: email,
+        password: hashed,
+        role: 'user',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    console.log('User ${username} berhasil didaftarkan!');
+}
+            `);
         });
 
         // ==================== KEYBOARD SHORTCUT ====================
         passwordInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
-                authForm.dispatchEvent(new Event('submit'));
+                loginForm.dispatchEvent(new Event('submit'));
             }
         });
 
-        // ==================== AUTO REDIRECT IF ALREADY LOGGED IN ====================
+        // ==================== AUTO REDIRECT ====================
         const savedUser = localStorage.getItem('itUser');
         if (savedUser) {
             try {
@@ -673,8 +615,10 @@
             }
         }
 
-        // ==================== INIT ====================
-        switchMode('login');
+        // ==================== FOCUS ====================
+        setTimeout(() => {
+            usernameInput.focus();
+        }, 300);
     </script>
 </body>
 </html>
