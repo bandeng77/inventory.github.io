@@ -11,6 +11,7 @@
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
@@ -330,7 +331,6 @@
             text-decoration: underline;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .login-wrapper {
                 flex-direction: column;
@@ -394,15 +394,15 @@
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label><i class="fas fa-user" style="margin-right:6px;"></i> Username</label>
+                    <label><i class="fas fa-envelope" style="margin-right:6px;"></i> Email</label>
                     <div class="input-wrapper">
-                        <i class="fas fa-user"></i>
+                        <i class="fas fa-envelope"></i>
                         <input 
-                            type="text" 
-                            id="usernameInput" 
-                            placeholder="Masukkan username" 
+                            type="email" 
+                            id="emailInput" 
+                            placeholder="Masukkan email" 
                             required 
-                            autocomplete="username"
+                            autocomplete="email"
                             autofocus
                         />
                     </div>
@@ -459,12 +459,14 @@
             appId: "1:654454090409:web:d1c4bc92b9be50218c57b8"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
 
         // ==================== DOM ELEMENTS ====================
         const loginForm = document.getElementById('loginForm');
-        const usernameInput = document.getElementById('usernameInput');
+        const emailInput = document.getElementById('emailInput');
         const passwordInput = document.getElementById('passwordInput');
         const loginBtn = document.getElementById('loginBtn');
         const loginBtnText = document.getElementById('loginBtnText');
@@ -492,16 +494,6 @@
             }
         }
 
-        // Simple hash function (SHA-256)
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password + 'it-inventory-salt');
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
-        }
-
         // ==================== TOGGLE PASSWORD ====================
         togglePassword.addEventListener('click', function() {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -510,64 +502,74 @@
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
 
-        // ==================== LOGIN ====================
+        // ==================== LOGIN WITH FIREBASE AUTH ====================
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const username = usernameInput.value.trim();
+            const email = emailInput.value.trim();
             const password = passwordInput.value;
 
-            if (!username || !password) {
-                showError('Username dan password wajib diisi.');
+            if (!email || !password) {
+                showError('Email dan password wajib diisi.');
                 return;
             }
 
             setLoading(true);
 
             try {
-                // Cari user berdasarkan username
-                const usersRef = db.collection('users');
-                const snapshot = await usersRef.where('username', '==', username).get();
+                // Login menggunakan Firebase Authentication
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
                 
-                if (snapshot.empty) {
-                    showError('Username tidak ditemukan.');
-                    setLoading(false);
-                    return;
+                // Ambil data user dari Firestore (opsional)
+                let userData = {};
+                try {
+                    const docRef = await db.collection('users').doc(user.uid).get();
+                    if (docRef.exists) {
+                        userData = docRef.data();
+                    }
+                } catch (e) {
+                    console.log('User data tidak ditemukan di Firestore');
                 }
 
-                let userData = null;
-                let userId = null;
-                snapshot.forEach(doc => {
-                    userData = doc.data();
-                    userId = doc.id;
-                });
-
-                // Verifikasi password
-                const hashedPassword = await hashPassword(password);
-                if (userData.password !== hashedPassword) {
-                    showError('Password salah. Silakan coba lagi.');
-                    setLoading(false);
-                    return;
-                }
-
-                // Login sukses
-                const user = {
-                    id: userId,
-                    username: userData.username,
-                    email: userData.email || '',
-                    displayName: userData.username,
+                // Simpan session
+                const sessionUser = {
+                    id: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || userData.username || user.email?.split('@')[0] || 'User',
+                    username: userData.username || user.email?.split('@')[0] || 'User',
                     role: userData.role || 'user'
                 };
                 
-                // Simpan session
-                localStorage.setItem('itUser', JSON.stringify(user));
+                localStorage.setItem('itUser', JSON.stringify(sessionUser));
                 
                 // Redirect ke halaman utama
                 window.location.href = 'IT-Inventory.html';
                 
             } catch (error) {
                 console.error('Login error:', error);
-                showError('Terjadi kesalahan. Silakan coba lagi.');
+                
+                let message = 'Terjadi kesalahan. Silakan coba lagi.';
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        message = 'Email tidak terdaftar. Silakan hubungi admin.';
+                        break;
+                    case 'auth/wrong-password':
+                        message = 'Password salah. Silakan coba lagi.';
+                        break;
+                    case 'auth/invalid-email':
+                        message = 'Format email tidak valid.';
+                        break;
+                    case 'auth/too-many-requests':
+                        message = 'Terlalu banyak percobaan. Coba lagi nanti.';
+                        break;
+                    case 'auth/network-request-failed':
+                        message = 'Koneksi internet bermasalah. Periksa koneksi Anda.';
+                        break;
+                    default:
+                        message = error.message;
+                }
+                showError(message);
                 setLoading(false);
             }
         });
@@ -575,23 +577,49 @@
         // ==================== REGISTER LINK ====================
         registerLink.addEventListener('click', function(e) {
             e.preventDefault();
-            alert('Untuk mendaftar, silakan hubungi admin IT.\n\nAtau buka console dan ketik:\nregisterUser("username", "email@domain.com", "password")');
+            alert('Untuk mendaftar, silakan hubungi admin IT.\n\nAtau gunakan console untuk register user baru.');
             
-            // Hidden register function untuk admin
-            console.log('=== REGISTER USER ===');
-            console.log('Gunakan fungsi di bawah ini untuk register (hanya untuk admin):');
+            console.log('=== CARA REGISTER USER BARU ===');
+            console.log('1. Buka Firebase Console');
+            console.log('2. Pilih Authentication');
+            console.log('3. Klik "Add User"');
+            console.log('4. Masukkan email dan password');
+            console.log('5. Klik "Add User"');
+            console.log('');
+            console.log('Atau gunakan script di console:');
             console.log(`
-async function registerUser(username, email, password) {
-    const hashed = await hashPassword(password);
-    await db.collection('users').add({
-        username: username,
-        email: email,
-        password: hashed,
-        role: 'user',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    console.log('User ${username} berhasil didaftarkan!');
+// Register user via Firebase Auth
+async function registerUser(email, password, username = '') {
+    try {
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Update profile
+        if (username) {
+            await user.updateProfile({ displayName: username });
+        }
+        
+        // Simpan ke Firestore
+        await firebase.firestore().collection('users').doc(user.uid).set({
+            username: username || email.split('@')[0],
+            email: email,
+            role: 'user',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('✅ User berhasil didaftarkan!');
+        console.log('📧 Email:', email);
+        console.log('👤 Username:', username || email.split('@')[0]);
+        return true;
+    } catch (error) {
+        console.error('❌ Gagal register:', error);
+        return false;
+    }
 }
+
+// Contoh penggunaan:
+registerUser('admin@domain.com', 'admin123', 'admin');
+registerUser('budi@domain.com', 'budi123', 'budi');
             `);
         });
 
@@ -603,21 +631,16 @@ async function registerUser(username, email, password) {
         });
 
         // ==================== AUTO REDIRECT ====================
-        const savedUser = localStorage.getItem('itUser');
-        if (savedUser) {
-            try {
-                const user = JSON.parse(savedUser);
-                if (user && user.id) {
-                    window.location.href = 'IT-Inventory.html';
-                }
-            } catch (e) {
-                localStorage.removeItem('itUser');
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                // Already logged in, redirect to main page
+                window.location.href = 'IT-Inventory.html';
             }
-        }
+        });
 
         // ==================== FOCUS ====================
         setTimeout(() => {
-            usernameInput.focus();
+            emailInput.focus();
         }, 300);
     </script>
 </body>
