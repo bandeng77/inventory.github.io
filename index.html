@@ -364,6 +364,21 @@
             box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
         }
 
+        .btn-perbaiki {
+            background: #8b5cf6;
+            color: white;
+            border-color: #7c3aed;
+        }
+
+        .btn-perbaiki i {
+            color: #c4b5fd;
+        }
+
+        .btn-perbaiki:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(139, 92, 246, 0.3);
+        }
+
         .card {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(12px);
@@ -661,6 +676,11 @@
             color: #065f46;
         }
 
+        .badge.perbaiki {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
         .badge.success {
             background: #d1fae5;
             color: #065f46;
@@ -685,9 +705,16 @@
             align-items: center;
         }
 
-        .filter-bar input,
-        .filter-bar select {
-            padding: 0.4rem 1rem;
+        .search-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-wrapper input {
+            padding: 0.4rem 2.5rem 0.4rem 1rem;
             border-radius: 40px;
             border: 1px solid #e2e8f0;
             background: white;
@@ -695,12 +722,74 @@
             outline: none;
             transition: all 0.3s ease;
             height: 40px;
+            width: 100%;
         }
 
-        .filter-bar input:focus,
-        .filter-bar select:focus {
+        .search-wrapper input:focus {
             border-color: #1a2639;
             box-shadow: 0 0 0 4px rgba(26, 38, 57, 0.06);
+        }
+
+        .search-wrapper input:focus ~ .search-icon {
+            color: #1a2639;
+        }
+
+        .search-wrapper .search-icon {
+            position: absolute;
+            right: 0.8rem;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            pointer-events: none;
+            transition: color 0.3s ease;
+        }
+
+        .search-wrapper .search-clear {
+            position: absolute;
+            right: 0.8rem;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+            display: none;
+            transition: color 0.3s ease;
+        }
+
+        .search-wrapper .search-clear:hover {
+            color: #dc2626;
+        }
+
+        .search-wrapper .search-clear.show {
+            display: block;
+        }
+
+        .search-wrapper .search-clear.show ~ .search-icon {
+            display: none;
+        }
+
+        .search-hint {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            padding: 0 0.5rem;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            margin-top: -4px;
+        }
+
+        .search-hint .hint-icon {
+            font-size: 0.6rem;
+        }
+
+        .search-hint.error {
+            color: #dc2626;
+        }
+
+        .search-hint.success {
+            color: #059669;
         }
 
         .text-muted {
@@ -748,7 +837,6 @@
             text-decoration-color: #2563eb;
         }
 
-        /* ===== MODAL ===== */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -946,6 +1034,11 @@
             .modal {
                 padding: 1.5rem;
             }
+
+            .search-wrapper {
+                min-width: 150px;
+                flex: 1 1 100%;
+            }
         }
 
         @media (max-width: 480px) {
@@ -959,6 +1052,11 @@
 
             .form-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
     </style>
@@ -1099,7 +1197,17 @@
 
             <!-- Filter & Sort -->
             <div class="filter-bar">
-                <input type="text" id="searchInventory" placeholder="🔍 Cari barang, serial, user, PIC..." />
+                <div class="search-wrapper">
+                    <input type="text" id="searchInventory" placeholder="Cari barang, serial, user, PIC..." />
+                    <span class="search-icon"><i class="fas fa-search"></i></span>
+                    <button class="search-clear" id="clearSearchInv" title="Hapus pencarian">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+                <span class="search-hint" id="searchHintInv">
+                    <span class="hint-icon">💡</span>
+                    <span>Minimal 3 huruf untuk mencari</span>
+                </span>
                 <select id="sortInventory">
                     <option value="name">Sortir: Nama</option>
                     <option value="type">Jenis</option>
@@ -1137,7 +1245,7 @@
         <!-- ===== LOGS PAGE ===== -->
         <div id="logsPage" class="page-section hidden">
             <div class="header-bar">
-                <h1><i class="fas fa-clipboard-list" style="color:#1a2639;"></i> Log Rusak & Pergantian</h1>
+                <h1><i class="fas fa-clipboard-list" style="color:#1a2639;"></i> Log Kerusakan & Perbaikan</h1>
                 <button class="btn btn-primary" id="showAddLogBtn">
                     <i class="fas fa-plus"></i> Tambah Log
                 </button>
@@ -1173,6 +1281,7 @@
                             <select id="logType">
                                 <option value="rusak">🚨 Rusak</option>
                                 <option value="ganti">🔄 Pergantian</option>
+                                <option value="perbaiki">🔧 Perbaiki</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1181,6 +1290,7 @@
                                 <option value="Hardware failure">Hardware failure</option>
                                 <option value="Software error">Software error</option>
                                 <option value="User mistake">User mistake</option>
+                                <option value="Maintenance">Maintenance</option>
                                 <option value="Other">➕ Other</option>
                             </select>
                             <div class="manual-input-wrapper-v3">
@@ -1190,6 +1300,10 @@
                         <div class="form-group">
                             <label><i class="fas fa-calendar-alt"></i> Tanggal</label>
                             <input type="date" id="logDate" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-info-circle"></i> Keterangan</label>
+                            <input type="text" id="logDescription" placeholder="Keterangan tambahan..." />
                         </div>
                         <div class="form-group">
                             <label>&nbsp;</label>
@@ -1203,11 +1317,22 @@
 
             <!-- Filter Log -->
             <div class="filter-bar">
-                <input type="text" id="searchLog" placeholder="🔍 Cari log..." />
+                <div class="search-wrapper">
+                    <input type="text" id="searchLog" placeholder="Cari log..." />
+                    <span class="search-icon"><i class="fas fa-search"></i></span>
+                    <button class="search-clear" id="clearSearchLog" title="Hapus pencarian">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+                <span class="search-hint" id="searchHintLog">
+                    <span class="hint-icon">💡</span>
+                    <span>Minimal 3 huruf untuk mencari</span>
+                </span>
                 <select id="filterLogType">
                     <option value="all">Semua tipe</option>
                     <option value="rusak">Rusak</option>
                     <option value="ganti">Pergantian</option>
+                    <option value="perbaiki">Perbaiki</option>
                 </select>
                 <button class="btn btn-outline" id="resetFilterLog">
                     <i class="fas fa-undo"></i> Reset
@@ -1224,13 +1349,14 @@
                             <th>Barang</th>
                             <th>Tipe</th>
                             <th>Root Cause</th>
+                            <th>Keterangan</th>
                             <th>Tanggal</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="logTableBody">
                         <tr class="empty-row">
-                            <td colspan="5">Belum ada log</td>
+                            <td colspan="6">Belum ada log</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1351,6 +1477,9 @@
         let isEditingItem = false;
         let isEditingLog = false;
 
+        let lastSearchQueryInv = '';
+        let lastSearchQueryLog = '';
+
         // ============================================================
         //  DOM REFERENCES
         // ============================================================
@@ -1375,6 +1504,8 @@
         const addItemCard = document.getElementById('addItemCard');
         const showAddItemBtn = document.getElementById('showAddItemBtn');
         const searchInv = document.getElementById('searchInventory');
+        const clearSearchInv = document.getElementById('clearSearchInv');
+        const searchHintInv = document.getElementById('searchHintInv');
         const sortInv = document.getElementById('sortInventory');
         const resetFilterInv = document.getElementById('resetFilterInv');
         const categoryFilter = document.getElementById('categoryFilter');
@@ -1389,10 +1520,13 @@
         const logRoot = document.getElementById('logRoot');
         const logManualRootV3 = document.getElementById('logManualRootV3');
         const logDate = document.getElementById('logDate');
+        const logDescription = document.getElementById('logDescription');
         const logSubmitBtnText = document.getElementById('logSubmitBtnText');
         const showAddLogBtn = document.getElementById('showAddLogBtn');
         const addLogCard = document.getElementById('addLogCard');
         const searchLog = document.getElementById('searchLog');
+        const clearSearchLog = document.getElementById('clearSearchLog');
+        const searchHintLog = document.getElementById('searchHintLog');
         const filterLogType = document.getElementById('filterLogType');
         const resetFilterLog = document.getElementById('resetFilterLog');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
@@ -1408,12 +1542,135 @@
         const goToImportBtn = document.getElementById('goToImportBtn');
         const backToInventoryBtn = document.getElementById('backToInventoryBtn');
 
-        // Modal
         const detailModal = document.getElementById('detailModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalBadge = document.getElementById('modalBadge');
         const modalBody = document.getElementById('modalBody');
         const modalClose = document.getElementById('modalClose');
+
+        // ============================================================
+        //  SEARCH FUNCTIONS
+        // ============================================================
+        function validateSearchQuery(query) {
+            const trimmed = query.trim();
+            if (trimmed.length === 0) {
+                return { valid: true, query: '', message: 'Masukkan kata kunci' };
+            }
+            if (trimmed.length < 3) {
+                return {
+                    valid: false,
+                    query: trimmed,
+                    message: `Minimal 3 huruf (${trimmed.length}/3)`
+                };
+            }
+            return { valid: true, query: trimmed, message: `Mencari: "${trimmed}"` };
+        }
+
+        function updateSearchHint(hintElement, result) {
+            const icon = hintElement.querySelector('.hint-icon');
+            const text = hintElement.querySelector('span:last-child');
+
+            if (!result.valid) {
+                hintElement.className = 'search-hint error';
+                icon.textContent = '⚠️';
+                text.textContent = result.message;
+            } else if (result.query === '') {
+                hintElement.className = 'search-hint';
+                icon.textContent = '💡';
+                text.textContent = 'Minimal 3 huruf untuk mencari';
+            } else {
+                hintElement.className = 'search-hint success';
+                icon.textContent = '✅';
+                text.textContent = result.message;
+            }
+        }
+
+        function getSearchValue(input) {
+            return input.value.trim();
+        }
+
+        // ============================================================
+        //  SEARCH HANDLERS
+        // ============================================================
+        let searchTimeoutInv = null;
+        let searchTimeoutLog = null;
+
+        function handleSearchInventory() {
+            clearTimeout(searchTimeoutInv);
+            searchTimeoutInv = setTimeout(() => {
+                const query = getSearchValue(searchInv);
+                const result = validateSearchQuery(query);
+
+                updateSearchHint(searchHintInv, result);
+
+                if (query.length > 0) {
+                    clearSearchInv.classList.add('show');
+                } else {
+                    clearSearchInv.classList.remove('show');
+                }
+
+                lastSearchQueryInv = query;
+
+                if (result.valid) {
+                    renderInventory();
+                } else {
+                    const items = getItems();
+                    if (items.length > 0) {
+                        inventoryBody.innerHTML =
+                            `<tr class="empty-row"><td colspan="6">🔍 ${result.message} - Belum bisa mencari</td></tr>`;
+                    } else {
+                        inventoryBody.innerHTML =
+                            `<tr class="empty-row"><td colspan="6">Belum ada barang</td></tr>`;
+                    }
+                }
+            }, 300);
+        }
+
+        function handleSearchLog() {
+            clearTimeout(searchTimeoutLog);
+            searchTimeoutLog = setTimeout(() => {
+                const query = getSearchValue(searchLog);
+                const result = validateSearchQuery(query);
+
+                updateSearchHint(searchHintLog, result);
+
+                if (query.length > 0) {
+                    clearSearchLog.classList.add('show');
+                } else {
+                    clearSearchLog.classList.remove('show');
+                }
+
+                lastSearchQueryLog = query;
+
+                if (result.valid) {
+                    renderLogs();
+                } else {
+                    const logs = getLogs();
+                    if (logs.length > 0) {
+                        logTableBody.innerHTML =
+                            `<tr class="empty-row"><td colspan="6">🔍 ${result.message} - Belum bisa mencari</td></tr>`;
+                    } else {
+                        logTableBody.innerHTML =
+                            `<tr class="empty-row"><td colspan="6">Belum ada log</td></tr>`;
+                    }
+                }
+            }, 300);
+        }
+
+        // ============================================================
+        //  CLEAR SEARCH
+        // ============================================================
+        clearSearchInv.addEventListener('click', function() {
+            searchInv.value = '';
+            clearSearchInv.classList.remove('show');
+            handleSearchInventory();
+        });
+
+        clearSearchLog.addEventListener('click', function() {
+            searchLog.value = '';
+            clearSearchLog.classList.remove('show');
+            handleSearchLog();
+        });
 
         // ============================================================
         //  AUTH STATE
@@ -1699,21 +1956,27 @@
         // ============================================================
         function renderInventory() {
             let items = getItems();
-            const search = searchInv.value.toLowerCase();
+            const search = searchInv.value.trim();
             const sort = sortInv.value;
+
+            let isSearchValid = true;
+            if (search.length > 0 && search.length < 3) {
+                isSearchValid = false;
+            }
 
             if (_activeCategory !== 'all') {
                 items = items.filter(it => it.type === _activeCategory);
             }
 
-            if (search) {
+            if (search && isSearchValid) {
+                const lowerSearch = search.toLowerCase();
                 items = items.filter(it =>
-                    it.name.toLowerCase().includes(search) ||
-                    (it.serial && it.serial.toLowerCase().includes(search)) ||
-                    it.type.toLowerCase().includes(search) ||
-                    it.user.toLowerCase().includes(search) ||
-                    it.pic.toLowerCase().includes(search) ||
-                    (it.description && it.description.toLowerCase().includes(search))
+                    it.name.toLowerCase().includes(lowerSearch) ||
+                    (it.serial && it.serial.toLowerCase().includes(lowerSearch)) ||
+                    it.type.toLowerCase().includes(lowerSearch) ||
+                    it.user.toLowerCase().includes(lowerSearch) ||
+                    it.pic.toLowerCase().includes(lowerSearch) ||
+                    (it.description && it.description.toLowerCase().includes(lowerSearch))
                 );
             }
 
@@ -1725,8 +1988,14 @@
             else if (sort === 'returnDate') items.sort((a, b) => (a.returnDate || '').localeCompare(b.returnDate || ''));
 
             if (!items.length) {
+                let message = `Tidak ada barang${_activeCategory !== 'all' ? ' di kategori ' + _activeCategory : ''}`;
+                if (search && !isSearchValid) {
+                    message = `🔍 Minimal 3 huruf untuk mencari (${search.length}/3)`;
+                } else if (search && isSearchValid && items.length === 0) {
+                    message = `🔍 Tidak ditemukan hasil untuk "${search}"`;
+                }
                 inventoryBody.innerHTML =
-                    `<tr class="empty-row"><td colspan="6">Tidak ada barang${_activeCategory !== 'all' ? ' di kategori ' + _activeCategory : ''}</td></tr>`;
+                    `<tr class="empty-row"><td colspan="6">${message}</td></tr>`;
                 return;
             }
 
@@ -1750,7 +2019,6 @@
             });
             inventoryBody.innerHTML = html;
 
-            // Click on name -> show detail modal
             inventoryBody.querySelectorAll('.clickable-name').forEach(el => {
                 el.addEventListener('click', function() {
                     const idx = parseInt(this.dataset.itemIdx, 10);
@@ -1758,7 +2026,6 @@
                 });
             });
 
-            // Edit button
             inventoryBody.querySelectorAll('.btn-edit-item').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const idx = parseInt(this.dataset.itemIdx, 10);
@@ -1766,7 +2033,6 @@
                 });
             });
 
-            // Delete button
             inventoryBody.querySelectorAll('[data-inv-idx]').forEach(btn => {
                 btn.addEventListener('click', async function() {
                     const idx = parseInt(this.dataset.invIdx, 10);
@@ -1782,7 +2048,6 @@
                 });
             });
 
-            // Add to log button
             inventoryBody.querySelectorAll('.btn-add-log').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const itemName = this.dataset.itemName;
@@ -1811,27 +2076,47 @@
 
         function renderLogs() {
             let logs = getLogs();
-            const search = searchLog.value.toLowerCase();
+            const search = searchLog.value.trim();
             const filterType = filterLogType.value;
 
-            if (search) logs = logs.filter(l => l.item.toLowerCase().includes(search) || l.rootCause.toLowerCase().includes(
-                search));
+            let isSearchValid = true;
+            if (search.length > 0 && search.length < 3) {
+                isSearchValid = false;
+            }
+
+            if (search && isSearchValid) {
+                const lowerSearch = search.toLowerCase();
+                logs = logs.filter(l =>
+                    l.item.toLowerCase().includes(lowerSearch) ||
+                    l.rootCause.toLowerCase().includes(lowerSearch) ||
+                    (l.description && l.description.toLowerCase().includes(lowerSearch))
+                );
+            }
+
             if (filterType !== 'all') logs = logs.filter(l => l.type === filterType);
 
             if (!logs.length) {
-                logTableBody.innerHTML = `<tr class="empty-row"><td colspan="5">Belum ada log</td></tr>`;
+                let message = 'Belum ada log';
+                if (search && !isSearchValid) {
+                    message = `🔍 Minimal 3 huruf untuk mencari (${search.length}/3)`;
+                } else if (search && isSearchValid && logs.length === 0) {
+                    message = `🔍 Tidak ditemukan hasil untuk "${search}"`;
+                }
+                logTableBody.innerHTML = `<tr class="empty-row"><td colspan="6">${message}</td></tr>`;
                 return;
             }
 
             let html = '';
             logs.forEach((log, idx) => {
                 const realIndex = getLogs().indexOf(log);
-                const typeLabel = log.type === 'rusak' ? 'Rusak' : 'Pergantian';
-                const cls = log.type === 'rusak' ? 'rusak' : 'ganti';
+                const typeLabel = log.type === 'rusak' ? 'Rusak' : log.type === 'ganti' ? 'Pergantian' : 'Perbaiki';
+                const cls = log.type === 'rusak' ? 'rusak' : log.type === 'ganti' ? 'ganti' : 'perbaiki';
+                const icon = log.type === 'rusak' ? '🚨' : log.type === 'ganti' ? '🔄' : '🔧';
                 html += `<tr class="fade-row">
                     <td><strong>${escapeHtml(log.item)}</strong></td>
-                    <td><span class="badge ${cls}">${typeLabel}</span></td>
+                    <td><span class="badge ${cls}">${icon} ${typeLabel}</span></td>
                     <td>${escapeHtml(log.rootCause)}</td>
+                    <td>${escapeHtml(log.description || '-')}</td>
                     <td>${escapeHtml(log.date)}</td>
                     <td>
                         <div class="action-buttons-cell">
@@ -1843,7 +2128,6 @@
             });
             logTableBody.innerHTML = html;
 
-            // Edit log button
             logTableBody.querySelectorAll('.btn-edit-log').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const idx = parseInt(this.dataset.logIdx, 10);
@@ -1851,7 +2135,6 @@
                 });
             });
 
-            // Delete log button
             logTableBody.querySelectorAll('[data-log-idx]').forEach(btn => {
                 btn.addEventListener('click', async function() {
                     const idx = parseInt(this.dataset.logIdx, 10);
@@ -1961,8 +2244,10 @@
             logType.value = log.type;
             logRoot.value = log.rootCause;
             logDate.value = log.date || new Date().toISOString().slice(0, 10);
+            logDescription.value = log.description || '';
 
-            if (log.rootCause && !['Hardware failure', 'Software error', 'User mistake'].includes(log.rootCause)) {
+            if (log.rootCause && !['Hardware failure', 'Software error', 'User mistake', 'Maintenance'].includes(log
+                    .rootCause)) {
                 logRoot.value = 'Other';
                 logManualRootV3.value = log.rootCause;
                 toggleLogRootManualV3();
@@ -2167,7 +2452,6 @@
                         let returnDate = row[headerMap['returnDate']] || row['Return Date'] || row[
                             'Tanggal Kembali'] || '';
 
-                        // Konversi date jika berupa angka (Excel date serial)
                         if (lendDate && typeof lendDate === 'number') {
                             const date = new Date((lendDate - 25569) * 86400 * 1000);
                             lendDate = date.toISOString().split('T')[0];
@@ -2177,7 +2461,6 @@
                             returnDate = date.toISOString().split('T')[0];
                         }
 
-                        // Format tanggal agar seragam (YYYY-MM-DD)
                         if (lendDate && typeof lendDate === 'string') {
                             lendDate = formatDateNumber(lendDate);
                         }
@@ -2242,12 +2525,13 @@
         //  EVENT LISTENERS
         // ============================================================
 
-        // ---- Navigation ----
+        searchInv.addEventListener('input', handleSearchInventory);
+        searchLog.addEventListener('input', handleSearchLog);
+
         sidebarLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 navigateTo(this.dataset.page);
-                // Reset edit state
                 isEditingItem = false;
                 isEditingLog = false;
                 editItemId.value = '';
@@ -2260,7 +2544,6 @@
         goToImportBtn.addEventListener('click', () => navigateTo('import'));
         backToInventoryBtn.addEventListener('click', () => navigateTo('inventory'));
 
-        // ---- Category Filter ----
         categoryFilter.addEventListener('click', function(e) {
             const chip = e.target.closest('.category-chip');
             if (!chip) return;
@@ -2271,7 +2554,6 @@
             renderInventory();
         });
 
-        // ---- Show/Hide Cards ----
         showAddItemBtn.addEventListener('click', function() {
             if (!isEditingItem) {
                 itemForm.reset();
@@ -2312,7 +2594,6 @@
             }
         });
 
-        // ---- Item Form ----
         itemForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             let type = itemType.value;
@@ -2336,7 +2617,6 @@
 
             try {
                 if (isEditingItem && editItemId.value) {
-                    // Update existing item
                     const items = getItems();
                     const index = items.findIndex(it => it.id === editItemId.value);
                     if (index !== -1) {
@@ -2359,7 +2639,6 @@
             }
         });
 
-        // ---- Log Form ----
         logForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             let item = logItemSelect.value;
@@ -2378,7 +2657,8 @@
                 item,
                 type: logType.value,
                 rootCause,
-                date: logDate.value || new Date().toISOString().slice(0, 10)
+                date: logDate.value || new Date().toISOString().slice(0, 10),
+                description: logDescription.value.trim() || ''
             };
 
             try {
@@ -2406,35 +2686,32 @@
             }
         });
 
-        // ---- Filter & Sort ----
-        searchInv.addEventListener('input', renderInventory);
         sortInv.addEventListener('change', renderInventory);
 
         resetFilterInv.addEventListener('click', function() {
             searchInv.value = '';
+            clearSearchInv.classList.remove('show');
             sortInv.value = 'name';
             categoryFilter.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
             document.querySelector('.category-chip[data-category="all"]').classList.add('active');
             _activeCategory = 'all';
-            renderInventory();
+            handleSearchInventory();
         });
 
-        searchLog.addEventListener('input', renderLogs);
         filterLogType.addEventListener('change', renderLogs);
 
         resetFilterLog.addEventListener('click', function() {
             searchLog.value = '';
+            clearSearchLog.classList.remove('show');
             filterLogType.value = 'all';
-            renderLogs();
+            handleSearchLog();
         });
 
-        // ---- Select Changes ----
         itemType.addEventListener('change', toggleItemTypeManualV3);
         logItemSelect.addEventListener('change', toggleLogItemManualV3);
         logRoot.addEventListener('change', toggleLogRootManualV3);
         logCategoryFilter.addEventListener('change', populateLogSelect);
 
-        // ---- Export PDF ----
         exportPdfBtn.addEventListener('click', function() {
             const logs = getLogs();
             if (!logs.length) { alert('Tidak ada log'); return; }
@@ -2442,20 +2719,20 @@
             if (!win) { alert('Izinkan pop-up'); return; }
             let rows = '';
             logs.forEach(l => {
+                const typeLabel = l.type === 'rusak' ? 'Rusak' : l.type === 'ganti' ? 'Pergantian' : 'Perbaiki';
                 rows +=
-                    `<tr><td>${escapeHtml(l.item)}</td><td>${l.type === 'rusak' ? 'Rusak' : 'Pergantian'}</td><td>${escapeHtml(l.rootCause)}</td><td>${escapeHtml(l.date)}</td></tr>`;
+                    `<tr><td>${escapeHtml(l.item)}</td><td>${typeLabel}</td><td>${escapeHtml(l.rootCause)}</td><td>${escapeHtml(l.description || '-')}</td><td>${escapeHtml(l.date)}</td></tr>`;
             });
             win.document.write(`<html><head><title>Log IT</title>
                 <style>body{font-family:Inter,sans-serif;padding:2rem;}table{width:100%;border-collapse:collapse;}th{background:#f1f5f9;padding:10px;}td{padding:8px;border-bottom:1px solid #e2e8f0;}</style>
-                </head><body><h1>Log Kerusakan & Pergantian</h1>
-                <table><thead><tr><th>Barang</th><th>Tipe</th><th>Root Cause</th><th>Tanggal</th></tr></thead>
+                </head><body><h1>Log Kerusakan & Perbaikan</h1>
+                <table><thead><tr><th>Barang</th><th>Tipe</th><th>Root Cause</th><th>Keterangan</th><th>Tanggal</th></tr></thead>
                 <tbody>${rows}</tbody></table></body></html>`);
             win.document.close();
             win.focus();
             win.print();
         });
 
-        // ---- Import Excel Events ----
         uploadZone.addEventListener('click', () => fileInput.click());
 
         uploadZone.addEventListener('dragover', function(e) {
@@ -2483,14 +2760,12 @@
             this.value = '';
         });
 
-        // ---- Confirm Import ----
         confirmImportBtn.addEventListener('click', async function() {
             if (importedData.length === 0) {
                 alert('Tidak ada data untuk diimport.');
                 return;
             }
 
-            const items = getItems();
             let added = 0;
 
             for (const itemData of importedData) {
@@ -2525,14 +2800,12 @@
             fileInput.value = '';
         });
 
-        // ---- Cancel Import ----
         cancelImportBtn.addEventListener('click', function() {
             importPreview.style.display = 'none';
             importedData = [];
             fileInput.value = '';
         });
 
-        // ---- Download Template ----
         downloadTemplateBtn.addEventListener('click', function() {
             const templateData = [
                 ['Nama Barang', 'Serial Number', 'Jenis', 'User', 'PIC', 'Lend Date', 'Return Date',
@@ -2587,9 +2860,11 @@
         navigateTo('inventory');
 
         console.log('✅ IT Inventory Manager siap digunakan!');
-        console.log('📌 Fitur baru: Edit data, Detail popup, Format tanggal seragam');
-        console.log('📌 Klik nama barang untuk melihat detail');
-        console.log('📌 Tombol edit untuk mengubah data');
+        console.log('📌 Fitur baru: Tipe Log "Perbaiki"');
+        console.log('📌 Search minimal 3 huruf');
+        console.log('📌 Klik nama barang untuk detail');
+        console.log('📌 Edit data dengan tombol edit');
+        console.log('📌 Import Excel dengan format tanggal seragam');
     </script>
 </body>
 </html>
