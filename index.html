@@ -18,7 +18,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* ===== ALL STYLES ===== */
         * {
             margin: 0;
             padding: 0;
@@ -32,7 +31,6 @@
             min-height: 100vh;
         }
 
-        /* ===== SIDEBAR ===== */
         .sidebar {
             width: 260px;
             background: rgba(255, 255, 255, 0.85);
@@ -213,7 +211,6 @@
             color: #fca5a5;
         }
 
-        /* ===== MAIN ===== */
         .main {
             flex: 1;
             padding: 2rem 2rem 2.5rem;
@@ -249,7 +246,6 @@
             gap: 12px;
         }
 
-        /* ===== BUTTONS ===== */
         .btn {
             background: white;
             border: none;
@@ -353,7 +349,21 @@
             box-shadow: 0 12px 24px rgba(220, 38, 38, 0.3);
         }
 
-        /* ===== CARDS ===== */
+        .btn-edit {
+            background: #2563eb;
+            color: white;
+            border-color: #1d4ed8;
+        }
+
+        .btn-edit i {
+            color: #93c5fd;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+        }
+
         .card {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(12px);
@@ -370,7 +380,6 @@
             animation: slideDown 0.4s ease;
         }
 
-        /* ===== FORMS ===== */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -519,7 +528,6 @@
             box-shadow: 0 12px 24px rgba(26, 38, 57, 0.3);
         }
 
-        /* ===== CATEGORY FILTER ===== */
         .category-filter {
             display: flex;
             flex-wrap: wrap;
@@ -556,7 +564,6 @@
             margin-right: 6px;
         }
 
-        /* ===== UPLOAD ZONE ===== */
         .upload-zone {
             border: 2px dashed #cbd5e1;
             border-radius: 24px;
@@ -597,7 +604,6 @@
             display: none;
         }
 
-        /* ===== TABLE ===== */
         .table-container {
             background: white;
             border-radius: 28px;
@@ -615,7 +621,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85rem;
-            min-width: 900px;
+            min-width: 700px;
         }
 
         th {
@@ -726,7 +732,152 @@
             font-size: 0.7rem;
         }
 
-        /* ===== RESPONSIVE ===== */
+        .clickable-name {
+            color: #1a2639;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            text-decoration-color: #94a3b8;
+            text-decoration-thickness: 1px;
+        }
+
+        .clickable-name:hover {
+            color: #2563eb;
+            text-decoration-color: #2563eb;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 32px;
+            padding: 2.5rem 2.5rem 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+            animation: slideDown 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .modal-header .modal-badge {
+            background: #eef2ff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #1a2639;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .modal-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-item .label {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .modal-item .value {
+            color: #0f172a;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .modal-item .value .badge {
+            font-size: 0.7rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 72px;
@@ -773,7 +924,7 @@
             }
 
             table {
-                min-width: 700px;
+                min-width: 600px;
             }
 
             .upload-zone {
@@ -791,6 +942,10 @@
             .btn-logout span {
                 display: none;
             }
+
+            .modal {
+                padding: 1.5rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -805,33 +960,6 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
-        }
-
-        /* ===== ANIMATIONS ===== */
-        @keyframes fadeIn {
-            0% {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideDown {
-            0% {
-                opacity: 0;
-                transform: translateY(-15px) scale(0.98);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .fade-row {
-            animation: fadeIn 0.3s ease;
         }
     </style>
 </head>
@@ -891,9 +1019,10 @@
                 </div>
             </div>
 
-            <!-- Form Tambah Barang -->
+            <!-- Form Tambah/Edit Barang -->
             <div class="card" id="addItemCard" style="display:none;">
                 <form id="itemForm">
+                    <input type="hidden" id="editItemId" value="" />
                     <div class="form-grid">
                         <div class="form-group">
                             <label><i class="fas fa-tag"></i> Nama Barang</label>
@@ -938,8 +1067,8 @@
                         </div>
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="submit" class="btn-submit">
-                                <i class="fas fa-save"></i> Simpan
+                            <button type="submit" class="btn-submit" id="submitBtn">
+                                <i class="fas fa-save"></i> <span id="submitBtnText">Simpan</span>
                             </button>
                         </div>
                     </div>
@@ -993,15 +1122,12 @@
                             <th>Jenis</th>
                             <th>User</th>
                             <th>PIC</th>
-                            <th>Lend Date</th>
-                            <th>Return Date</th>
-                            <th>Deskripsi</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryTableBody">
                         <tr class="empty-row">
-                            <td colspan="9">Belum ada barang</td>
+                            <td colspan="6">Belum ada barang</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1020,6 +1146,7 @@
             <!-- Form Log -->
             <div class="card" id="addLogCard" style="display:none;">
                 <form id="logForm">
+                    <input type="hidden" id="editLogId" value="" />
                     <div class="form-grid">
                         <div class="form-group">
                             <label><i class="fas fa-cubes"></i> Jenis Barang</label>
@@ -1066,8 +1193,8 @@
                         </div>
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="submit" class="btn-submit">
-                                <i class="fas fa-plus-circle"></i> Tambah
+                            <button type="submit" class="btn-submit" id="logSubmitBtn">
+                                <i class="fas fa-plus-circle"></i> <span id="logSubmitBtnText">Tambah</span>
                             </button>
                         </div>
                     </div>
@@ -1177,6 +1304,24 @@
 
     </div>
 
+    <!-- ===== MODAL DETAIL ===== -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modalTitle">Detail Barang</h2>
+                    <span class="modal-badge" id="modalBadge">Laptop</span>
+                </div>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Isi akan diisi oleh JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================================
         //  FIREBASE CONFIG - REALTIME DATABASE
@@ -1203,6 +1348,8 @@
         let _logs = [];
         let _activeCategory = 'all';
         let importedData = [];
+        let isEditingItem = false;
+        let isEditingLog = false;
 
         // ============================================================
         //  DOM REFERENCES
@@ -1214,6 +1361,7 @@
 
         const inventoryBody = document.getElementById('inventoryTableBody');
         const itemForm = document.getElementById('itemForm');
+        const editItemId = document.getElementById('editItemId');
         const itemName = document.getElementById('itemName');
         const itemSerial = document.getElementById('itemSerial');
         const itemType = document.getElementById('itemType');
@@ -1223,6 +1371,7 @@
         const itemLendDate = document.getElementById('itemLendDate');
         const itemReturnDate = document.getElementById('itemReturnDate');
         const itemDescription = document.getElementById('itemDescription');
+        const submitBtnText = document.getElementById('submitBtnText');
         const addItemCard = document.getElementById('addItemCard');
         const showAddItemBtn = document.getElementById('showAddItemBtn');
         const searchInv = document.getElementById('searchInventory');
@@ -1232,6 +1381,7 @@
 
         const logTableBody = document.getElementById('logTableBody');
         const logForm = document.getElementById('logForm');
+        const editLogId = document.getElementById('editLogId');
         const logItemSelect = document.getElementById('logItemSelect');
         const logCategoryFilter = document.getElementById('logCategoryFilter');
         const logManualItemV3 = document.getElementById('logManualItemV3');
@@ -1239,6 +1389,7 @@
         const logRoot = document.getElementById('logRoot');
         const logManualRootV3 = document.getElementById('logManualRootV3');
         const logDate = document.getElementById('logDate');
+        const logSubmitBtnText = document.getElementById('logSubmitBtnText');
         const showAddLogBtn = document.getElementById('showAddLogBtn');
         const addLogCard = document.getElementById('addLogCard');
         const searchLog = document.getElementById('searchLog');
@@ -1257,6 +1408,13 @@
         const goToImportBtn = document.getElementById('goToImportBtn');
         const backToInventoryBtn = document.getElementById('backToInventoryBtn');
 
+        // Modal
+        const detailModal = document.getElementById('detailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBadge = document.getElementById('modalBadge');
+        const modalBody = document.getElementById('modalBody');
+        const modalClose = document.getElementById('modalClose');
+
         // ============================================================
         //  AUTH STATE
         // ============================================================
@@ -1264,7 +1422,6 @@
             if (user) {
                 currentUser = user;
 
-                // Ambil data dari localStorage
                 const savedUser = localStorage.getItem('itUser');
                 let userData = {};
                 if (savedUser) {
@@ -1273,16 +1430,13 @@
                     } catch (e) {}
                 }
 
-                // Update UI
                 const displayName = userData.displayName || user.displayName || user.email?.split('@')[0] || 'User';
                 document.getElementById('userNameDisplay').textContent = displayName;
                 document.getElementById('userEmailDisplay').textContent = user.email || '';
                 document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
 
-                // Load data
                 loadAllData();
             } else {
-                // Redirect ke login
                 localStorage.removeItem('itUser');
                 window.location.href = 'login.html';
             }
@@ -1316,15 +1470,13 @@
                 populateLogSelect();
             } catch (error) {
                 console.error('Error loading data:', error);
-                alert('Gagal memuat data. Silakan refresh halaman.');
             }
         }
 
-        // ----- ITEMS -----
         async function loadItemsFromRTDB() {
             return new Promise((resolve, reject) => {
                 const userItemsRef = database.ref(`${PATH_ITEMS}/${currentUser.uid}`);
-                
+
                 userItemsRef.once('value', function(snapshot) {
                     const items = [];
                     snapshot.forEach(function(childSnapshot) {
@@ -1332,14 +1484,12 @@
                         item.id = childSnapshot.key;
                         items.push(item);
                     });
-                    
-                    // Sort by createdAt desc
+
                     items.sort((a, b) => {
                         return (b.createdAt || 0) - (a.createdAt || 0);
                     });
-                    
+
                     _items = items;
-                    console.log('Items loaded:', items.length);
                     resolve(items);
                 }, function(error) {
                     console.error('Error loading items:', error);
@@ -1354,20 +1504,33 @@
             return new Promise((resolve, reject) => {
                 const userItemsRef = database.ref(`${PATH_ITEMS}/${currentUser.uid}`);
                 const newItemRef = userItemsRef.push();
-                
+
                 const itemData = {
                     ...item,
                     userId: currentUser.uid,
                     createdAt: Date.now()
                 };
-                
+
                 newItemRef.set(itemData, function(error) {
                     if (error) {
-                        console.error('Error saving item:', error);
                         reject(error);
                     } else {
                         const savedItem = { id: newItemRef.key, ...itemData };
                         resolve(savedItem);
+                    }
+                });
+            });
+        }
+
+        async function updateItemInRTDB(itemId, item) {
+            if (!currentUser) throw new Error('User not authenticated');
+            return new Promise((resolve, reject) => {
+                const itemRef = database.ref(`${PATH_ITEMS}/${currentUser.uid}/${itemId}`);
+                itemRef.update(item, function(error) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
                     }
                 });
             });
@@ -1379,7 +1542,6 @@
                 const itemRef = database.ref(`${PATH_ITEMS}/${currentUser.uid}/${itemId}`);
                 itemRef.remove(function(error) {
                     if (error) {
-                        console.error('Error deleting item:', error);
                         reject(error);
                     } else {
                         resolve();
@@ -1388,11 +1550,10 @@
             });
         }
 
-        // ----- LOGS -----
         async function loadLogsFromRTDB() {
             return new Promise((resolve, reject) => {
                 const userLogsRef = database.ref(`${PATH_LOGS}/${currentUser.uid}`);
-                
+
                 userLogsRef.once('value', function(snapshot) {
                     const logs = [];
                     snapshot.forEach(function(childSnapshot) {
@@ -1400,14 +1561,12 @@
                         log.id = childSnapshot.key;
                         logs.push(log);
                     });
-                    
-                    // Sort by createdAt desc
+
                     logs.sort((a, b) => {
                         return (b.createdAt || 0) - (a.createdAt || 0);
                     });
-                    
+
                     _logs = logs;
-                    console.log('Logs loaded:', logs.length);
                     resolve(logs);
                 }, function(error) {
                     console.error('Error loading logs:', error);
@@ -1422,20 +1581,33 @@
             return new Promise((resolve, reject) => {
                 const userLogsRef = database.ref(`${PATH_LOGS}/${currentUser.uid}`);
                 const newLogRef = userLogsRef.push();
-                
+
                 const logData = {
                     ...log,
                     userId: currentUser.uid,
                     createdAt: Date.now()
                 };
-                
+
                 newLogRef.set(logData, function(error) {
                     if (error) {
-                        console.error('Error saving log:', error);
                         reject(error);
                     } else {
                         const savedLog = { id: newLogRef.key, ...logData };
                         resolve(savedLog);
+                    }
+                });
+            });
+        }
+
+        async function updateLogInRTDB(logId, log) {
+            if (!currentUser) throw new Error('User not authenticated');
+            return new Promise((resolve, reject) => {
+                const logRef = database.ref(`${PATH_LOGS}/${currentUser.uid}/${logId}`);
+                logRef.update(log, function(error) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
                     }
                 });
             });
@@ -1447,7 +1619,6 @@
                 const logRef = database.ref(`${PATH_LOGS}/${currentUser.uid}/${logId}`);
                 logRef.remove(function(error) {
                     if (error) {
-                        console.error('Error deleting log:', error);
                         reject(error);
                     } else {
                         resolve();
@@ -1460,12 +1631,25 @@
         //  DATA OPERATIONS
         // ============================================================
         function getItems() { return _items; }
+
         function getLogs() { return _logs; }
 
         async function addItem(item) {
             const saved = await saveItemToRTDB(item);
             _items.unshift(saved);
             return saved;
+        }
+
+        async function editItem(index, updatedItem) {
+            const items = getItems();
+            if (index >= 0 && index < items.length) {
+                const item = items[index];
+                if (item.id) {
+                    await updateItemInRTDB(item.id, updatedItem);
+                    Object.assign(item, updatedItem);
+                    _items = items;
+                }
+            }
         }
 
         async function removeItem(index) {
@@ -1484,6 +1668,18 @@
             const saved = await saveLogToRTDB(log);
             _logs.unshift(saved);
             return saved;
+        }
+
+        async function editLog(index, updatedLog) {
+            const logs = getLogs();
+            if (index >= 0 && index < logs.length) {
+                const log = logs[index];
+                if (log.id) {
+                    await updateLogInRTDB(log.id, updatedLog);
+                    Object.assign(log, updatedLog);
+                    _logs = logs;
+                }
+            }
         }
 
         async function removeLog(index) {
@@ -1530,7 +1726,7 @@
 
             if (!items.length) {
                 inventoryBody.innerHTML =
-                    `<tr class="empty-row"><td colspan="9">Tidak ada barang${_activeCategory !== 'all' ? ' di kategori ' + _activeCategory : ''}</td></tr>`;
+                    `<tr class="empty-row"><td colspan="6">Tidak ada barang${_activeCategory !== 'all' ? ' di kategori ' + _activeCategory : ''}</td></tr>`;
                 return;
             }
 
@@ -1538,23 +1734,37 @@
             items.forEach((item, idx) => {
                 const realIndex = getItems().indexOf(item);
                 html += `<tr class="fade-row">
-                    <td><strong>${escapeHtml(item.name)}</strong></td>
+                    <td><span class="clickable-name" data-item-idx="${realIndex}">${escapeHtml(item.name)}</span></td>
                     <td><span class="badge">${escapeHtml(item.serial || '-')}</span></td>
                     <td><span class="badge">${escapeHtml(item.type)}</span></td>
                     <td>${escapeHtml(item.user)}</td>
                     <td>${escapeHtml(item.pic)}</td>
-                    <td>${formatDate(item.lendDate)}</td>
-                    <td>${formatDate(item.returnDate)}</td>
-                    <td><span class="text-truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || '-')}</span></td>
                     <td>
                         <div class="action-buttons-cell">
-                            <button class="btn btn-danger btn-add-log" data-item-name="${escapeHtml(item.name)}" data-item-type="${escapeHtml(item.type)}" title="Tambah ke Log Kerusakan"><i class="fas fa-clipboard-plus"></i></button>
+                            <button class="btn btn-edit btn-edit-item" data-item-idx="${realIndex}" title="Edit Barang"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger btn-add-log" data-item-name="${escapeHtml(item.name)}" data-item-type="${escapeHtml(item.type)}" title="Tambah ke Log"><i class="fas fa-clipboard-plus"></i></button>
                             <button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-inv-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </td>
                 </tr>`;
             });
             inventoryBody.innerHTML = html;
+
+            // Click on name -> show detail modal
+            inventoryBody.querySelectorAll('.clickable-name').forEach(el => {
+                el.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.itemIdx, 10);
+                    showItemDetail(idx);
+                });
+            });
+
+            // Edit button
+            inventoryBody.querySelectorAll('.btn-edit-item').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.itemIdx, 10);
+                    editItemForm(idx);
+                });
+            });
 
             // Delete button
             inventoryBody.querySelectorAll('[data-inv-idx]').forEach(btn => {
@@ -1623,11 +1833,25 @@
                     <td><span class="badge ${cls}">${typeLabel}</span></td>
                     <td>${escapeHtml(log.rootCause)}</td>
                     <td>${escapeHtml(log.date)}</td>
-                    <td><button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-log-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button></td>
+                    <td>
+                        <div class="action-buttons-cell">
+                            <button class="btn btn-edit btn-edit-log" data-log-idx="${realIndex}" title="Edit Log"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline" style="padding:0.2rem 0.8rem; font-size:0.7rem;" data-log-idx="${realIndex}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </td>
                 </tr>`;
             });
             logTableBody.innerHTML = html;
 
+            // Edit log button
+            logTableBody.querySelectorAll('.btn-edit-log').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.logIdx, 10);
+                    editLogForm(idx);
+                });
+            });
+
+            // Delete log button
             logTableBody.querySelectorAll('[data-log-idx]').forEach(btn => {
                 btn.addEventListener('click', async function() {
                     const idx = parseInt(this.dataset.logIdx, 10);
@@ -1641,6 +1865,114 @@
                     }
                 });
             });
+        }
+
+        // ============================================================
+        //  DETAIL MODAL
+        // ============================================================
+        function showItemDetail(index) {
+            const items = getItems();
+            if (index < 0 || index >= items.length) return;
+
+            const item = items[index];
+
+            modalTitle.textContent = item.name;
+            modalBadge.textContent = item.type || 'Laptop';
+
+            const fields = [
+                { label: 'Serial Number', value: item.serial || '-' },
+                { label: 'Jenis Barang', value: item.type || '-' },
+                { label: 'User', value: item.user || '-' },
+                { label: 'PIC', value: item.pic || '-' },
+                { label: 'Tanggal Pinjam', value: formatDate(item.lendDate) },
+                { label: 'Tanggal Kembali', value: formatDate(item.returnDate) },
+                { label: 'Deskripsi', value: item.description || '-' }
+            ];
+
+            let html = '';
+            fields.forEach(field => {
+                html += `
+                    <div class="modal-item">
+                        <span class="label">${field.label}</span>
+                        <span class="value">${escapeHtml(field.value)}</span>
+                    </div>
+                `;
+            });
+
+            modalBody.innerHTML = html;
+            detailModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            detailModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        detailModal.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ============================================================
+        //  EDIT FUNCTIONS
+        // ============================================================
+        function editItemForm(index) {
+            const items = getItems();
+            if (index < 0 || index >= items.length) return;
+
+            const item = items[index];
+
+            isEditingItem = true;
+            editItemId.value = item.id;
+            itemName.value = item.name;
+            itemSerial.value = item.serial || '';
+            itemType.value = item.type || 'Laptop';
+            itemUser.value = item.user || '';
+            itemPic.value = item.pic || '';
+            itemLendDate.value = formatDateInput(item.lendDate);
+            itemReturnDate.value = formatDateInput(item.returnDate);
+            itemDescription.value = item.description || '';
+
+            if (item.type && !['Laptop', 'Monitor', 'Printer', 'Keyboard & Mouse'].includes(item.type)) {
+                itemType.value = 'other';
+                manualTypeV3.value = item.type;
+                toggleItemTypeManualV3();
+            }
+
+            submitBtnText.textContent = 'Update';
+            if (addItemCard.style.display === 'none' || !addItemCard.style.display) {
+                toggleCard(addItemCard);
+            }
+            addItemCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function editLogForm(index) {
+            const logs = getLogs();
+            if (index < 0 || index >= logs.length) return;
+
+            const log = logs[index];
+
+            isEditingLog = true;
+            editLogId.value = log.id;
+            logCategoryFilter.value = 'all';
+            populateLogSelect();
+            logItemSelect.value = log.item;
+            logType.value = log.type;
+            logRoot.value = log.rootCause;
+            logDate.value = log.date || new Date().toISOString().slice(0, 10);
+
+            if (log.rootCause && !['Hardware failure', 'Software error', 'User mistake'].includes(log.rootCause)) {
+                logRoot.value = 'Other';
+                logManualRootV3.value = log.rootCause;
+                toggleLogRootManualV3();
+            }
+
+            logSubmitBtnText.textContent = 'Update';
+            if (addLogCard.style.display === 'none' || !addLogCard.style.display) {
+                toggleCard(addLogCard);
+            }
+            addLogCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         // ============================================================
@@ -1663,6 +1995,30 @@
                 const d = new Date(dateStr + 'T00:00:00');
                 if (isNaN(d.getTime())) return dateStr;
                 return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            } catch { return dateStr; }
+        }
+
+        function formatDateInput(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr + 'T00:00:00');
+                if (isNaN(d.getTime())) return dateStr;
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            } catch { return dateStr; }
+        }
+
+        function formatDateNumber(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr + 'T00:00:00');
+                if (isNaN(d.getTime())) return dateStr;
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
             } catch { return dateStr; }
         }
 
@@ -1776,15 +2132,12 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-                    console.log('Data dari Excel:', jsonData);
-
                     if (!jsonData || jsonData.length === 0) {
                         alert('File Excel kosong atau tidak memiliki data.');
                         return;
                     }
 
                     const columns = Object.keys(jsonData[0]);
-                    console.log('Kolom yang ditemukan:', columns);
 
                     const headerMap = {};
                     columns.forEach(col => {
@@ -1809,6 +2162,29 @@
                     });
 
                     importedData = jsonData.map((row) => {
+                        let lendDate = row[headerMap['lendDate']] || row['Lend Date'] || row['Tanggal Pinjam'] ||
+                            '';
+                        let returnDate = row[headerMap['returnDate']] || row['Return Date'] || row[
+                            'Tanggal Kembali'] || '';
+
+                        // Konversi date jika berupa angka (Excel date serial)
+                        if (lendDate && typeof lendDate === 'number') {
+                            const date = new Date((lendDate - 25569) * 86400 * 1000);
+                            lendDate = date.toISOString().split('T')[0];
+                        }
+                        if (returnDate && typeof returnDate === 'number') {
+                            const date = new Date((returnDate - 25569) * 86400 * 1000);
+                            returnDate = date.toISOString().split('T')[0];
+                        }
+
+                        // Format tanggal agar seragam (YYYY-MM-DD)
+                        if (lendDate && typeof lendDate === 'string') {
+                            lendDate = formatDateNumber(lendDate);
+                        }
+                        if (returnDate && typeof returnDate === 'string') {
+                            returnDate = formatDateNumber(returnDate);
+                        }
+
                         const item = {
                             name: row[headerMap['name']] || row['Nama Barang'] || row['Nama'] || row['Barang'] ||
                                 '',
@@ -1816,28 +2192,14 @@
                             type: row[headerMap['type']] || row['Jenis'] || row['Tipe'] || 'Laptop',
                             user: row[headerMap['user']] || row['User'] || '-',
                             pic: row[headerMap['pic']] || row['PIC'] || '-',
-                            lendDate: row[headerMap['lendDate']] || row['Lend Date'] || row['Tanggal Pinjam'] ||
-                            '',
-                            returnDate: row[headerMap['returnDate']] || row['Return Date'] || row[
-                                'Tanggal Kembali'] || '',
+                            lendDate: lendDate,
+                            returnDate: returnDate,
                             description: row[headerMap['description']] || row['Description'] || row['Deskripsi'] ||
                             ''
                         };
 
-                        // Konversi date jika berupa angka (Excel date serial)
-                        if (item.lendDate && typeof item.lendDate === 'number') {
-                            const date = new Date((item.lendDate - 25569) * 86400 * 1000);
-                            item.lendDate = date.toISOString().split('T')[0];
-                        }
-                        if (item.returnDate && typeof item.returnDate === 'number') {
-                            const date = new Date((item.returnDate - 25569) * 86400 * 1000);
-                            item.returnDate = date.toISOString().split('T')[0];
-                        }
-
                         return item;
                     }).filter(item => item.name && item.name.trim() !== '');
-
-                    console.log('Data yang diimport:', importedData);
 
                     if (importedData.length === 0) {
                         alert('Tidak ada data valid yang ditemukan. Pastikan kolom "Nama Barang" terisi.');
@@ -1885,6 +2247,13 @@
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 navigateTo(this.dataset.page);
+                // Reset edit state
+                isEditingItem = false;
+                isEditingLog = false;
+                editItemId.value = '';
+                editLogId.value = '';
+                submitBtnText.textContent = 'Simpan';
+                logSubmitBtnText.textContent = 'Tambah';
             });
         });
 
@@ -1903,8 +2272,45 @@
         });
 
         // ---- Show/Hide Cards ----
-        showAddItemBtn.addEventListener('click', () => toggleCard(addItemCard));
-        showAddLogBtn.addEventListener('click', () => toggleCard(addLogCard));
+        showAddItemBtn.addEventListener('click', function() {
+            if (!isEditingItem) {
+                itemForm.reset();
+                editItemId.value = '';
+                submitBtnText.textContent = 'Simpan';
+                toggleItemTypeManualV3();
+                setDefaultDates();
+            }
+            toggleCard(addItemCard);
+            if (addItemCard.style.display === 'none' || !addItemCard.style.display) {
+                isEditingItem = false;
+                editItemId.value = '';
+                submitBtnText.textContent = 'Simpan';
+                itemForm.reset();
+                toggleItemTypeManualV3();
+                setDefaultDates();
+            }
+        });
+
+        showAddLogBtn.addEventListener('click', function() {
+            if (!isEditingLog) {
+                logForm.reset();
+                editLogId.value = '';
+                logSubmitBtnText.textContent = 'Tambah';
+                toggleLogItemManualV3();
+                toggleLogRootManualV3();
+                setDefaultDates();
+            }
+            toggleCard(addLogCard);
+            if (addLogCard.style.display === 'none' || !addLogCard.style.display) {
+                isEditingLog = false;
+                editLogId.value = '';
+                logSubmitBtnText.textContent = 'Tambah';
+                logForm.reset();
+                toggleLogItemManualV3();
+                toggleLogRootManualV3();
+                setDefaultDates();
+            }
+        });
 
         // ---- Item Form ----
         itemForm.addEventListener('submit', async function(e) {
@@ -1929,7 +2335,19 @@
             };
 
             try {
-                await addItem(item);
+                if (isEditingItem && editItemId.value) {
+                    // Update existing item
+                    const items = getItems();
+                    const index = items.findIndex(it => it.id === editItemId.value);
+                    if (index !== -1) {
+                        await editItem(index, item);
+                    }
+                    isEditingItem = false;
+                    editItemId.value = '';
+                    submitBtnText.textContent = 'Simpan';
+                } else {
+                    await addItem(item);
+                }
                 renderInventory();
                 populateLogSelect();
                 this.reset();
@@ -1964,7 +2382,18 @@
             };
 
             try {
-                await addLog(log);
+                if (isEditingLog && editLogId.value) {
+                    const logs = getLogs();
+                    const index = logs.findIndex(l => l.id === editLogId.value);
+                    if (index !== -1) {
+                        await editLog(index, log);
+                    }
+                    isEditingLog = false;
+                    editLogId.value = '';
+                    logSubmitBtnText.textContent = 'Tambah';
+                } else {
+                    await addLog(log);
+                }
                 renderLogs();
                 this.reset();
                 addLogCard.style.display = 'none';
@@ -2063,16 +2492,9 @@
 
             const items = getItems();
             let added = 0;
-            let skipped = 0;
 
             for (const itemData of importedData) {
-                const exists = items.some(ex =>
-                    ex.name === itemData.name &&
-                    ex.serial === itemData.serial &&
-                    ex.type === itemData.type
-                );
-
-                if (!exists && itemData.name.trim() !== '') {
+                if (itemData.name.trim() !== '') {
                     const item = {
                         name: itemData.name.trim(),
                         serial: itemData.serial || '',
@@ -2089,18 +2511,14 @@
                         added++;
                     } catch (error) {
                         console.error('Error importing item:', error);
-                        skipped++;
                     }
-                } else {
-                    skipped++;
                 }
             }
 
             renderInventory();
             populateLogSelect();
 
-            alert(`✅ Berhasil mengimport ${added} barang baru.\n` +
-                `⏭️ ${skipped} barang skip (duplikat atau tidak valid).`);
+            alert(`✅ Berhasil mengimport ${added} barang baru.`);
 
             importPreview.style.display = 'none';
             importedData = [];
@@ -2169,8 +2587,9 @@
         navigateTo('inventory');
 
         console.log('✅ IT Inventory Manager siap digunakan!');
-        console.log('📌 Menggunakan Firebase Realtime Database');
-        console.log('📌 Database URL:', firebaseConfig.databaseURL);
+        console.log('📌 Fitur baru: Edit data, Detail popup, Format tanggal seragam');
+        console.log('📌 Klik nama barang untuk melihat detail');
+        console.log('📌 Tombol edit untuk mengubah data');
     </script>
 </body>
 </html>
