@@ -16,6 +16,9 @@
 
     <!-- SheetJS untuk membaca & menulis Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- html2pdf untuk export PDF langsung download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         * {
@@ -1075,6 +1078,11 @@
             .filter-bar .search-container {
                 min-width: unset;
             }
+        }
+
+        /* Sembunyikan elemen PDF saat tidak digunakan */
+        .pdf-export-content {
+            display: none;
         }
     </style>
 </head>
@@ -2535,71 +2543,150 @@
         }
 
         // ============================================================
-        //  EXPORT FUNCTIONS
+        //  EXPORT FUNCTIONS - PDF (LANGSUNG DOWNLOAD)
         // ============================================================
 
-        // Export Inventory to PDF
+        // Export Inventory to PDF (langsung download)
         document.getElementById('exportInventoryPdfBtn').addEventListener('click', function() {
             const items = getItems();
             if (!items.length) { alert('Tidak ada data barang untuk diexport.'); return; }
 
-            const win = window.open('', '_blank', 'width=1000,height=800');
-            if (!win) { alert('Izinkan pop-up untuk export PDF.'); return; }
+            // Buat elemen sementara untuk PDF
+            const container = document.createElement('div');
+            container.style.padding = '40px';
+            container.style.fontFamily = 'Inter, sans-serif';
+            container.style.background = 'white';
+            container.style.width = '100%';
 
             let rows = '';
             items.forEach(item => {
                 rows += `<tr>
-                            <td>${escapeHtml(item.name)}</td>
-                            <td>${escapeHtml(item.serial || '-')}</td>
-                            <td>${escapeHtml(item.type)}</td>
-                            <td>${escapeHtml(item.user)}</td>
-                            <td>${escapeHtml(item.pic)}</td>
-                            <td>${formatDate(item.lendDate)}</td>
-                            <td>${formatDate(item.returnDate)}</td>
-                            <td>${escapeHtml(item.description || '-')}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(item.name)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(item.serial || '-')}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(item.type)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(item.user)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(item.pic)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${formatDate(item.lendDate)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${formatDate(item.returnDate)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(item.description || '-')}</td>
                         </tr>`;
             });
 
-            win.document.write(`
-                        <html>
-                            <head>
-                                <title>Daftar Barang - IT Inventory</title>
-                                <style>
-                                    body { font-family: Inter, sans-serif; padding: 2rem; }
-                                    h1 { color: #0f172a; margin-bottom: 1rem; }
-                                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
-                                    th { background: #f1f5f9; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
-                                    td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; }
-                                    .badge { background: #eef2ff; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
-                                    .footer { margin-top: 2rem; font-size: 10px; color: #94a3b8; text-align: center; }
-                                </style>
-                            </head>
-                            <body>
-                                <h1>📦 Daftar Barang Inventaris IT</h1>
-                                <p style="color:#64748b; margin-bottom:1.5rem;">Total: ${items.length} barang | Dicetak: ${new Date().toLocaleString('id-ID')}</p>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Nama Barang</th>
-                                            <th>Serial Number</th>
-                                            <th>Jenis</th>
-                                            <th>User</th>
-                                            <th>PIC</th>
-                                            <th>Tanggal Pinjam</th>
-                                            <th>Tanggal Kembali</th>
-                                            <th>Deskripsi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>${rows}</tbody>
-                                </table>
-                                <div class="footer">Dicetak dari IT Inventory Manager</div>
-                            </body>
-                        </html>
-                    `);
-            win.document.close();
-            win.focus();
-            win.print();
+            container.innerHTML = `
+                        <h1 style="color:#0f172a; margin-bottom:8px;">📦 Daftar Barang Inventaris IT</h1>
+                        <p style="color:#64748b; margin-bottom:20px;">Total: ${items.length} barang | Dicetak: ${new Date().toLocaleString('id-ID')}</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                            <thead>
+                                <tr>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Nama Barang</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Serial Number</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Jenis</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">User</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">PIC</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Tanggal Pinjam</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Tanggal Kembali</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Deskripsi</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                        <div style="margin-top:30px; font-size:10px; color:#94a3b8; text-align:center; border-top:1px solid #e2e8f0; padding-top:15px;">
+                            Dicetak dari IT Inventory Manager
+                        </div>
+                    `;
+
+            document.body.appendChild(container);
+
+            // Gunakan html2pdf untuk langsung download
+            html2pdf()
+                .set({
+                    margin: [10, 10, 10, 10],
+                    filename: `inventory_${new Date().toISOString().slice(0,10)}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                })
+                .from(container)
+                .save()
+                .then(() => {
+                    document.body.removeChild(container);
+                })
+                .catch((err) => {
+                    console.error('PDF Export Error:', err);
+                    alert('Gagal mengekspor PDF: ' + err.message);
+                    document.body.removeChild(container);
+                });
         });
+
+        // Export Logs to PDF (langsung download)
+        document.getElementById('exportLogsPdfBtn').addEventListener('click', function() {
+            const logs = getLogs();
+            if (!logs.length) { alert('Tidak ada data log untuk diexport.'); return; }
+
+            const container = document.createElement('div');
+            container.style.padding = '40px';
+            container.style.fontFamily = 'Inter, sans-serif';
+            container.style.background = 'white';
+            container.style.width = '100%';
+
+            let rows = '';
+            logs.forEach(log => {
+                const typeLabel = log.type === 'rusak' ? '🚨 Rusak' : log.type === 'ganti' ? '🔄 Pergantian' :
+                    '🔧 Perbaiki';
+                rows += `<tr>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(log.item)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${typeLabel}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(log.rootCause)}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(log.description || '-')}</td>
+                            <td style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">${escapeHtml(log.date)}</td>
+                        </tr>`;
+            });
+
+            container.innerHTML = `
+                        <h1 style="color:#0f172a; margin-bottom:8px;">📋 Log Kerusakan & Perbaikan</h1>
+                        <p style="color:#64748b; margin-bottom:20px;">Total: ${logs.length} log | Dicetak: ${new Date().toLocaleString('id-ID')}</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                            <thead>
+                                <tr>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Barang</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Tipe Log</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Root Cause</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Keterangan</th>
+                                    <th style="background:#f1f5f9; padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;">Tanggal</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                        <div style="margin-top:30px; font-size:10px; color:#94a3b8; text-align:center; border-top:1px solid #e2e8f0; padding-top:15px;">
+                            Dicetak dari IT Inventory Manager
+                        </div>
+                    `;
+
+            document.body.appendChild(container);
+
+            html2pdf()
+                .set({
+                    margin: [10, 10, 10, 10],
+                    filename: `logs_${new Date().toISOString().slice(0,10)}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                })
+                .from(container)
+                .save()
+                .then(() => {
+                    document.body.removeChild(container);
+                })
+                .catch((err) => {
+                    console.error('PDF Export Error:', err);
+                    alert('Gagal mengekspor PDF: ' + err.message);
+                    document.body.removeChild(container);
+                });
+        });
+
+        // ============================================================
+        //  EXPORT FUNCTIONS - EXCEL
+        // ============================================================
 
         // Export Inventory to Excel
         document.getElementById('exportInventoryExcelBtn').addEventListener('click', function() {
@@ -2633,64 +2720,6 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(link.href);
-        });
-
-        // Export Logs to PDF
-        document.getElementById('exportLogsPdfBtn').addEventListener('click', function() {
-            const logs = getLogs();
-            if (!logs.length) { alert('Tidak ada data log untuk diexport.'); return; }
-
-            const win = window.open('', '_blank', 'width=1000,height=800');
-            if (!win) { alert('Izinkan pop-up untuk export PDF.'); return; }
-
-            let rows = '';
-            logs.forEach(log => {
-                const typeLabel = log.type === 'rusak' ? '🚨 Rusak' : log.type === 'ganti' ? '🔄 Pergantian' :
-                    '🔧 Perbaiki';
-                rows += `<tr>
-                            <td>${escapeHtml(log.item)}</td>
-                            <td>${typeLabel}</td>
-                            <td>${escapeHtml(log.rootCause)}</td>
-                            <td>${escapeHtml(log.description || '-')}</td>
-                            <td>${escapeHtml(log.date)}</td>
-                        </tr>`;
-            });
-
-            win.document.write(`
-                        <html>
-                            <head>
-                                <title>Log Kerusakan - IT Inventory</title>
-                                <style>
-                                    body { font-family: Inter, sans-serif; padding: 2rem; }
-                                    h1 { color: #0f172a; margin-bottom: 1rem; }
-                                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
-                                    th { background: #f1f5f9; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
-                                    td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; }
-                                    .footer { margin-top: 2rem; font-size: 10px; color: #94a3b8; text-align: center; }
-                                </style>
-                            </head>
-                            <body>
-                                <h1>📋 Log Kerusakan & Perbaikan</h1>
-                                <p style="color:#64748b; margin-bottom:1.5rem;">Total: ${logs.length} log | Dicetak: ${new Date().toLocaleString('id-ID')}</p>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Barang</th>
-                                            <th>Tipe Log</th>
-                                            <th>Root Cause</th>
-                                            <th>Keterangan</th>
-                                            <th>Tanggal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>${rows}</tbody>
-                                </table>
-                                <div class="footer">Dicetak dari IT Inventory Manager</div>
-                            </body>
-                        </html>
-                    `);
-            win.document.close();
-            win.focus();
-            win.print();
         });
 
         // Export Logs to Excel
@@ -3044,7 +3073,8 @@
         console.log('📌 Search: Minimal 3 huruf, langsung filter');
         console.log('📌 Klik nama barang untuk detail');
         console.log('📌 Tipe Log: Rusak, Pergantian, Perbaiki');
-        console.log('📌 Export PDF/Excel tersedia di setiap halaman');
+        console.log('📌 Export PDF langsung download (tidak print)');
+        console.log('📌 Export Excel juga tersedia');
     </script>
 </body>
 </html>
