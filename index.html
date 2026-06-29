@@ -8,15 +8,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    
-    <!-- SheetJS untuk membaca file Excel -->
+
+    <!-- SheetJS untuk membaca & menulis Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <style>
         * {
             margin: 0;
@@ -1131,6 +1131,12 @@
                     <button class="btn btn-success" id="goToImportBtn">
                         <i class="fas fa-file-import"></i> Import
                     </button>
+                    <button class="btn btn-outline" id="exportInventoryPdfBtn">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button class="btn btn-outline" id="exportInventoryExcelBtn">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
                 </div>
             </div>
 
@@ -1261,9 +1267,17 @@
         <div id="logsPage" class="page-section hidden">
             <div class="header-bar">
                 <h1><i class="fas fa-clipboard-list" style="color:#1a2639;"></i> Log Kerusakan</h1>
-                <button class="btn btn-primary" id="showAddLogBtn">
-                    <i class="fas fa-plus"></i> Tambah Log
-                </button>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" id="showAddLogBtn">
+                        <i class="fas fa-plus"></i> Tambah Log
+                    </button>
+                    <button class="btn btn-outline" id="exportLogsPdfBtn">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button class="btn btn-outline" id="exportLogsExcelBtn">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                </div>
             </div>
 
             <!-- Form Log -->
@@ -1347,9 +1361,6 @@
                 </select>
                 <button class="btn btn-outline" id="resetFilterLog">
                     <i class="fas fa-undo"></i> Reset
-                </button>
-                <button class="btn btn-outline" id="exportPdfBtn">
-                    <i class="fas fa-file-pdf"></i> PDF
                 </button>
             </div>
             <div class="search-hint" id="searchHintLog">
@@ -1544,7 +1555,6 @@
         const searchHintLog = document.getElementById('searchHintLog');
         const filterLogType = document.getElementById('filterLogType');
         const resetFilterLog = document.getElementById('resetFilterLog');
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
 
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
@@ -1963,11 +1973,9 @@
                 items = items.filter(it => it.type === _activeCategory);
             }
 
-            // PENCARIAN - DENGAN PERBAIKAN toLowerCase
             if (search && isSearchValid) {
                 const lowerSearch = search.toLowerCase();
                 items = items.filter(it => {
-                    // Konversi semua field ke string untuk menghindari error
                     const nameStr = String(it.name || '').toLowerCase();
                     const serialStr = String(it.serial || '').toLowerCase();
                     const typeStr = String(it.type || '').toLowerCase();
@@ -2527,6 +2535,195 @@
         }
 
         // ============================================================
+        //  EXPORT FUNCTIONS
+        // ============================================================
+
+        // Export Inventory to PDF
+        document.getElementById('exportInventoryPdfBtn').addEventListener('click', function() {
+            const items = getItems();
+            if (!items.length) { alert('Tidak ada data barang untuk diexport.'); return; }
+
+            const win = window.open('', '_blank', 'width=1000,height=800');
+            if (!win) { alert('Izinkan pop-up untuk export PDF.'); return; }
+
+            let rows = '';
+            items.forEach(item => {
+                rows += `<tr>
+                            <td>${escapeHtml(item.name)}</td>
+                            <td>${escapeHtml(item.serial || '-')}</td>
+                            <td>${escapeHtml(item.type)}</td>
+                            <td>${escapeHtml(item.user)}</td>
+                            <td>${escapeHtml(item.pic)}</td>
+                            <td>${formatDate(item.lendDate)}</td>
+                            <td>${formatDate(item.returnDate)}</td>
+                            <td>${escapeHtml(item.description || '-')}</td>
+                        </tr>`;
+            });
+
+            win.document.write(`
+                        <html>
+                            <head>
+                                <title>Daftar Barang - IT Inventory</title>
+                                <style>
+                                    body { font-family: Inter, sans-serif; padding: 2rem; }
+                                    h1 { color: #0f172a; margin-bottom: 1rem; }
+                                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                                    th { background: #f1f5f9; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+                                    td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; }
+                                    .badge { background: #eef2ff; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
+                                    .footer { margin-top: 2rem; font-size: 10px; color: #94a3b8; text-align: center; }
+                                </style>
+                            </head>
+                            <body>
+                                <h1>📦 Daftar Barang Inventaris IT</h1>
+                                <p style="color:#64748b; margin-bottom:1.5rem;">Total: ${items.length} barang | Dicetak: ${new Date().toLocaleString('id-ID')}</p>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Nama Barang</th>
+                                            <th>Serial Number</th>
+                                            <th>Jenis</th>
+                                            <th>User</th>
+                                            <th>PIC</th>
+                                            <th>Tanggal Pinjam</th>
+                                            <th>Tanggal Kembali</th>
+                                            <th>Deskripsi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                                <div class="footer">Dicetak dari IT Inventory Manager</div>
+                            </body>
+                        </html>
+                    `);
+            win.document.close();
+            win.focus();
+            win.print();
+        });
+
+        // Export Inventory to Excel
+        document.getElementById('exportInventoryExcelBtn').addEventListener('click', function() {
+            const items = getItems();
+            if (!items.length) { alert('Tidak ada data barang untuk diexport.'); return; }
+
+            const data = items.map(item => ({
+                'Nama Barang': item.name,
+                'Serial Number': item.serial || '-',
+                'Jenis': item.type,
+                'User': item.user,
+                'PIC': item.pic,
+                'Lend Date': formatDate(item.lendDate),
+                'Return Date': formatDate(item.returnDate),
+                'Deskripsi': item.description || '-'
+            }));
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            ws['!cols'] = [
+                { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
+                { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 30 }
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `inventory_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        });
+
+        // Export Logs to PDF
+        document.getElementById('exportLogsPdfBtn').addEventListener('click', function() {
+            const logs = getLogs();
+            if (!logs.length) { alert('Tidak ada data log untuk diexport.'); return; }
+
+            const win = window.open('', '_blank', 'width=1000,height=800');
+            if (!win) { alert('Izinkan pop-up untuk export PDF.'); return; }
+
+            let rows = '';
+            logs.forEach(log => {
+                const typeLabel = log.type === 'rusak' ? '🚨 Rusak' : log.type === 'ganti' ? '🔄 Pergantian' :
+                    '🔧 Perbaiki';
+                rows += `<tr>
+                            <td>${escapeHtml(log.item)}</td>
+                            <td>${typeLabel}</td>
+                            <td>${escapeHtml(log.rootCause)}</td>
+                            <td>${escapeHtml(log.description || '-')}</td>
+                            <td>${escapeHtml(log.date)}</td>
+                        </tr>`;
+            });
+
+            win.document.write(`
+                        <html>
+                            <head>
+                                <title>Log Kerusakan - IT Inventory</title>
+                                <style>
+                                    body { font-family: Inter, sans-serif; padding: 2rem; }
+                                    h1 { color: #0f172a; margin-bottom: 1rem; }
+                                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                                    th { background: #f1f5f9; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+                                    td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; }
+                                    .footer { margin-top: 2rem; font-size: 10px; color: #94a3b8; text-align: center; }
+                                </style>
+                            </head>
+                            <body>
+                                <h1>📋 Log Kerusakan & Perbaikan</h1>
+                                <p style="color:#64748b; margin-bottom:1.5rem;">Total: ${logs.length} log | Dicetak: ${new Date().toLocaleString('id-ID')}</p>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Barang</th>
+                                            <th>Tipe Log</th>
+                                            <th>Root Cause</th>
+                                            <th>Keterangan</th>
+                                            <th>Tanggal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                                <div class="footer">Dicetak dari IT Inventory Manager</div>
+                            </body>
+                        </html>
+                    `);
+            win.document.close();
+            win.focus();
+            win.print();
+        });
+
+        // Export Logs to Excel
+        document.getElementById('exportLogsExcelBtn').addEventListener('click', function() {
+            const logs = getLogs();
+            if (!logs.length) { alert('Tidak ada data log untuk diexport.'); return; }
+
+            const data = logs.map(log => ({
+                'Barang': log.item,
+                'Tipe Log': log.type === 'rusak' ? 'Rusak' : log.type === 'ganti' ? 'Pergantian' : 'Perbaiki',
+                'Root Cause': log.rootCause,
+                'Keterangan': log.description || '-',
+                'Tanggal': log.date
+            }));
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            ws['!cols'] = [
+                { wch: 22 }, { wch: 18 }, { wch: 25 }, { wch: 30 }, { wch: 18 }
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, 'Logs');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `logs_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        });
+
+        // ============================================================
         //  EVENT LISTENERS
         // ============================================================
 
@@ -2717,27 +2914,6 @@
         logRoot.addEventListener('change', toggleLogRootManualV3);
         logCategoryFilter.addEventListener('change', populateLogSelect);
 
-        exportPdfBtn.addEventListener('click', function() {
-            const logs = getLogs();
-            if (!logs.length) { alert('Tidak ada log'); return; }
-            const win = window.open('', '_blank', 'width=800,height=600');
-            if (!win) { alert('Izinkan pop-up'); return; }
-            let rows = '';
-            logs.forEach(l => {
-                const typeLabel = l.type === 'rusak' ? 'Rusak' : l.type === 'ganti' ? 'Pergantian' : 'Perbaiki';
-                rows +=
-                    `<tr><td>${escapeHtml(l.item)}</td><td>${typeLabel}</td><td>${escapeHtml(l.rootCause)}</td><td>${escapeHtml(l.description || '-')}</td><td>${escapeHtml(l.date)}</td></tr>`;
-            });
-            win.document.write(`<html><head><title>Log IT</title>
-                <style>body{font-family:Inter,sans-serif;padding:2rem;}table{width:100%;border-collapse:collapse;}th{background:#f1f5f9;padding:10px;}td{padding:8px;border-bottom:1px solid #e2e8f0;}</style>
-                </head><body><h1>Log Kerusakan & Perbaikan</h1>
-                <table><thead><tr><th>Barang</th><th>Tipe</th><th>Root Cause</th><th>Keterangan</th><th>Tanggal</th></tr></thead>
-                <tbody>${rows}</tbody></table></body></html>`);
-            win.document.close();
-            win.focus();
-            win.print();
-        });
-
         uploadZone.addEventListener('click', () => fileInput.click());
 
         uploadZone.addEventListener('dragover', function(e) {
@@ -2866,10 +3042,9 @@
 
         console.log('✅ IT Inventory Manager siap digunakan!');
         console.log('📌 Search: Minimal 3 huruf, langsung filter');
-        console.log('📌 Contoh: ketik "gal" → muncul "Galih Satrio"');
         console.log('📌 Klik nama barang untuk detail');
         console.log('📌 Tipe Log: Rusak, Pergantian, Perbaiki');
-        console.log('📌 Tombol X terpisah untuk hapus pencarian');
+        console.log('📌 Export PDF/Excel tersedia di setiap halaman');
     </script>
 </body>
 </html>
