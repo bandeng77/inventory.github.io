@@ -1977,7 +1977,12 @@
                 isSearchValid = false;
             }
 
-            if (_activeCategory !== 'all') {
+            // Filter berdasarkan kategori
+            if (_activeCategory === 'other') {
+                // Tampilkan semua barang yang TIDAK termasuk dalam kategori utama
+                const mainCategories = ['Laptop', 'Monitor', 'Printer', 'Keyboard & Mouse'];
+                items = items.filter(it => !mainCategories.includes(it.type));
+            } else if (_activeCategory !== 'all') {
                 items = items.filter(it => it.type === _activeCategory);
             }
 
@@ -2007,7 +2012,9 @@
 
             if (!items.length) {
                 let message = `Tidak ada barang`;
-                if (_activeCategory !== 'all') {
+                if (_activeCategory === 'other') {
+                    message = 'Tidak ada barang dengan kategori lain';
+                } else if (_activeCategory !== 'all') {
                     message += ` di kategori ${_activeCategory}`;
                 }
                 if (search && !isSearchValid) {
@@ -2238,7 +2245,9 @@
             itemReturnDate.value = formatDateInput(item.returnDate);
             itemDescription.value = item.description || '';
 
-            if (item.type && !['Laptop', 'Monitor', 'Printer', 'Keyboard & Mouse'].includes(item.type)) {
+            // Cek apakah item termasuk kategori "other"
+            const mainCategories = ['Laptop', 'Monitor', 'Printer', 'Keyboard & Mouse'];
+            if (item.type && !mainCategories.includes(item.type)) {
                 itemType.value = 'other';
                 manualTypeV3.value = item.type;
                 toggleItemTypeManualV3();
@@ -2389,7 +2398,11 @@
             const selectedCategory = logCategoryFilter.value;
 
             let filteredItems = items;
-            if (selectedCategory !== 'all') {
+            if (selectedCategory === 'other') {
+                // Tampilkan barang dengan kategori lain (tidak termasuk utama)
+                const mainCategories = ['Laptop', 'Monitor', 'Printer', 'Keyboard & Mouse'];
+                filteredItems = items.filter(it => !mainCategories.includes(it.type));
+            } else if (selectedCategory !== 'all') {
                 filteredItems = items.filter(it => it.type === selectedCategory);
             }
 
@@ -3075,6 +3088,7 @@
         console.log('📌 Tipe Log: Rusak, Pergantian, Perbaiki');
         console.log('📌 Export PDF langsung download (tidak print)');
         console.log('📌 Export Excel juga tersedia');
+        console.log('📌 Kategori "other" otomatis masuk ke sub menu "Lainnya"');
     </script>
 </body>
 </html>
